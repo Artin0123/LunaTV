@@ -69,7 +69,7 @@ pnpm format            # 格式化代码 (Prettier)
 
 - 模块级内存缓存（`cachedConfig` 等）在 Serverless 中每次请求可能在不同实例，命中率有限
 - 图片优化使用 Vercel 内建优化（支持 WebP/AVIF 自动转换）
-- PWA Service Worker 使用 `next-pwa`（待迁移到 `@serwist/next`）
+- PWA Service Worker 使用 `@serwist/next`（替代 `next-pwa`）
 
 ### Cloudflare Workers 反向代理
 
