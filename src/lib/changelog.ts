@@ -11,8 +11,115 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
-    version: "100.0.3",
-    date: "2025-10-27",
+    version: '100.1.0',
+    date: '2026-02-14',
+    added: [
+      '新增密码哈希存储（bcryptjs），支持旧版明文密码自动迁移',
+      '新增 Cron API 认证（`CRON_SECRET` 环境变量）',
+      '新增 HMAC 签名时间戳过期机制（7 天有效期）',
+      '新增系统监控 API `/api/admin/monitor`（内存使用、Redis 延迟、实例信息）',
+      '新增健康检查 API `/api/admin/monitor/health`（Upstash + 采集源连通性）',
+      '新增 `.env.example` 环境变量参考文件',
+      '新增单元测试（data-utils、version_check、utils，共 28 个 test case）',
+      '新增管理后台「系统监控」标签页（内存概览、Redis 延迟、SVG 趋势图、健康检查）',
+      '新增 OpenAPI 文档路由：`/api/docs`（Swagger UI）与 `/api/docs/openapi`（JSON）',
+      '新增 OpenAPI 自动化生成流程：可一键输出 OpenAPI JSON 与 TypeScript 类型声明',
+    ],
+    changed: [
+      '迁移到 Serverless 部署架构（移除 Docker、Redis TCP、Kvrocks）',
+      '`tsconfig.json` target 改为 ES2020，排除测试文件的类型检查',
+      'Cookie 安全设置：`auth` 改为 HttpOnly + Secure + SameSite，客户端展示信息拆分到 `auth_client`',
+      '启用 Vercel 图片优化（移除 `images.unoptimized: true`）',
+      '统一 `PlayRecord`/`Favorite` 类型定义（`db.client.ts` 改为从 `types.ts` 导入）',
+      '提取 `ensureString`/`ensureStringArray` 到 `data-utils.ts` 共享模块（使用 `unknown` 替代 `any`）',
+      '消除 `db.ts` 中所有 `as any` 类型断言，直接使用 `IStorage` 接口',
+      '替换 `he` 库为浏览器原生 HTML 实体解码（减少 bundle 体积）',
+      '清理 `version.ts`、`data-utils.ts` 中不必要的 `eslint-disable` 注释',
+      '新增 `api-schemas.ts` Zod 验证 Schema，并应用到 login、change-password、favorites API',
+      '扩展 Zod 输入验证到 playrecords、searchhistory、skipconfigs API',
+      '默认站点命名文案统一为 `LunaTV`（README、环境示例、运行时默认值、manifest 生成）',
+      '抽取 `vod_play_url` 解析逻辑为共享函数，减少搜索/详情重复代码',
+      '抽取直播源查询助手，复用在 proxy 与 precheck 路由中',
+      '精简系统监控面板说明文案，移除平台绑定描述，仅保留核心指标信息',
+      '系统监控与健康检查接口补充 owner/admin 鉴权与状态码校验逻辑',
+      'Upstash 用户管理新增索引集合（`u:index`），`getAllUsers` 优先使用 `SMEMBERS`',
+      '完善 OpenAPI 初始化流程（补齐 `extendZodWithOpenApi`），确保文档路由可正常生成',
+      '统一全站与 Swagger 文档页面的中文字体 fallback，避免中文退回衬线字体',
+      'memory 模式存储实例改为 `globalThis` 单例，降低开发态热更新导致的配置丢失概率',
+      '`getAllPlayRecords` / `getAllFavorites` 使用 MGET 批量查询，替代 N+1 查询',
+      '`addSearchHistory` 使用 Redis Pipeline，3 次操作合并为 1 次网络往返',
+      '`deleteUser` 改为单次用户命名空间匹配删除，减少重复 KEYS 扫描',
+      'TypeScript 4.9.5 → 5.9.3',
+      'Prettier 2.8.8 → 3.8.1',
+      'Jest 27.5.1 → 30.2.0',
+      'Husky 7.0.4 → 9.1.7（迁移到 v9 hook 格式）',
+      'Commitlint 16.x → 20.4.1',
+      'lint-staged 12.5.0 → 16.2.7',
+      '@typescript-eslint/* 5.62.0 → 7.18.0',
+      '@testing-library/jest-dom 5.17.0 → 6.9.1',
+      '@testing-library/react 15.0.7 → 16.3.2',
+      '@types/node 24.0.3 → 25.2.3',
+      'prettier-plugin-tailwindcss 0.5.14 → 0.7.2',
+      'eslint-config-prettier 8.10.0 → 10.1.8',
+      'eslint-plugin-simple-import-sort 7.0.0 → 12.1.1',
+      'eslint-plugin-unused-imports 2.0.0 → 3.2.0',
+      'next-router-mock 0.9.13 → 1.0.5',
+      'artplayer 5.2.5 → 5.3.0',
+      'hls.js 1.6.10 → 1.6.15',
+      'framer-motion 12.18.1 → 12.34.0',
+      '@upstash/redis 1.35.1 → 1.36.2',
+      '@headlessui/react 2.2.4 → 2.2.9',
+      '@tailwindcss/forms 0.5.10 → 0.5.11',
+      'autoprefixer 10.4.21 → 10.4.24',
+      '移除 Dockerfile、.dockerignore、start.js、docker-image.yml',
+      '移除 Redis TCP / Kvrocks 存储驱动',
+      '移除 webpack-obfuscator',
+      '移除 @types/bs58、@types/testing-library__jest-dom',
+      '移除 @vidstack/react、vidstack、media-icons（源码中无引用）',
+      '移除 he、@types/he（改用浏览器原生 API）',
+    ],
+    fixed: [
+      '修复 `version_check.ts` 数组越界错误',
+      '修复 `tsconfig.json` 非法 `moduleResolution` 数组',
+      '移除 login route 中已废弃的 `redis` / `kvrocks` 存储类型引用',
+      '修复 `/api/cron` 未等待任务执行完成即返回成功的问题',
+      '优化 TS 分片代理：移除手动逐块泵流逻辑，改为直接透传上游流以降低 CPU 开销',
+      '优化直播预检：优先使用 HEAD（不支持时回退 GET），减少不必要的响应体处理',
+      '修复 memory 模式下本地缓存残留导致重启后仍显示旧数据的问题',
+      '修复 memory 模式签名校验在不同运行时不一致导致登录后回到登录页的问题',
+      '修复数据迁移导入路由使用 `(db as any).storage` 绕过类型约束的问题',
+      '修复配置订阅仅支持 Base58 导致明文 JSON 订阅地址返回 500 的问题（改为同时支持 JSON/Base58）',
+      '修复流式搜索在无可用资源站时未发送完成事件，导致前端持续转圈的问题',
+      '修复管理后台表格中 DnD 容器嵌套在 `<table>` 内导致的 hydration 警告问题',
+      '修复 Next/Image 过时 `onLoadingComplete` 与 `fill` 缺失 `sizes` 警告问题',
+      '修复 Swagger UI 部分节点字体回退为 NSimSun 的问题（统一 endpoint 文本为无衬线）',
+    ],
+  },
+  {
+    version: '100.0.3',
+    date: '2025-10-27',
+    added: [
+      // 无新增内容
+    ],
+    changed: [
+      // 无变更内容
+    ],
+    fixed: ['修复 webkit 下播放器控件的展示 bug'],
+  },
+  {
+    version: '100.0.2',
+    date: '2025-10-23',
+    added: [
+      // 无新增内容
+    ],
+    changed: [
+      // 无变更内容
+    ],
+    fixed: ['修复 /api/search/resources 接口越权问题'],
+  },
+  {
+    version: '100.0.1',
+    date: '2025-09-25',
     added: [
       // 无新增内容
     ],
@@ -20,510 +127,386 @@ export const changelog: ChangelogEntry[] = [
       // 无变更内容
     ],
     fixed: [
-      "修复 webkit 下播放器控件的展示 bug"
-    ]
+      '修复错误的环境变量 ADMIN_USERNAME',
+      '修复 bangumi 数据中没有图片导致首页崩溃问题',
+    ],
   },
   {
-    version: "100.0.2",
-    date: "2025-10-23",
+    version: '100.0.0',
+    date: '2025-08-26',
+    added: [
+      '新增对 SITE_BASE 环境变量的支持，解决 m3u8 重写时 base url 错误的问题',
+    ],
+    changed: ['移除授权相关逻辑', '移除代码混淆', '移除 melody-cdn-sharon'],
+    fixed: [
+      // 无修复内容
+    ],
+  },
+  {
+    version: '4.3.0',
+    date: '2025-08-26',
+    added: ['支持将 IPTV 频道添加到收藏中'],
+    changed: ['禁用 flv 直播，仅支持 m3u8 直播', '降低代理 ts 分片的内存占用'],
+    fixed: [
+      // 无修复内容
+    ],
+  },
+  {
+    version: '4.2.1',
+    date: '2025-08-26',
     added: [
       // 无新增内容
     ],
     changed: [
       // 无变更内容
     ],
-    fixed: [
-      "修复 /api/search/resources 接口越权问题"
-    ]
+    fixed: ['修复直播源加载失败或离开页面后依然无限加载的问题'],
   },
   {
-    version: "100.0.1",
-    date: "2025-09-25",
+    version: '4.2.0',
+    date: '2025-08-26',
+    added: [
+      '支持 flv 直播和直播地址解析到 mp4 的处理',
+      '增加直播台标的 proxy 以防止 cors',
+      '支持播放页选集分组的滚动翻页',
+    ],
+    changed: ['管理后台页面的按钮增加加载中的 UI'],
+    fixed: ['/api/proxy/m3u8 仅对 m3u8 内容反序列化，降低内存和 CPU 消耗'],
+  },
+  {
+    version: '4.1.1',
+    date: '2025-08-25',
     added: [
       // 无新增内容
     ],
-    changed: [
-      // 无变更内容
-    ],
-    fixed: [
-      "修复错误的环境变量 ADMIN_USERNAME",
-      "修复 bangumi 数据中没有图片导致首页崩溃问题"
-    ]
+    changed: ['增加对 url-tvg 和多 epg url 的支持'],
+    fixed: ['修复 epg 数据清洗中去重叠逻辑未考虑日期导致的问题'],
   },
   {
-    version: "100.0.0",
-    date: "2025-08-26",
-    added: [
-      "新增对 SITE_BASE 环境变量的支持，解决 m3u8 重写时 base url 错误的问题"
+    version: '4.1.0',
+    date: '2025-08-24',
+    added: ['解析 m3u 自带的 epg 和自定义 epg，增加今日节目单'],
+    changed: ['直播源数据刷新改为并发刷新'],
+    fixed: [
+      // 无修复内容
     ],
+  },
+  {
+    version: '4.0.0',
+    date: '2025-08-24',
+    added: ['增加 iptv 订阅和播放功能'],
     changed: [
-      "移除授权相关逻辑",
-      "移除代码混淆",
-      "移除 melody-cdn-sharon"
+      '搜索页面视频卡片移动端/右键菜单添加豆瓣链接',
+      '搜索建议遵循色情过滤',
     ],
     fixed: [
       // 无修复内容
-    ]
+    ],
   },
   {
-    version: "4.3.0",
-    date: "2025-08-26",
+    version: '3.2.1',
+    date: '2025-08-22',
     added: [
-      "支持将 IPTV 频道添加到收藏中"
+      // 无新增内容
+    ],
+    changed: ['新增色色过滤分类', '调整搜索建议框层级'],
+    fixed: [
+      // 无修复内容
+    ],
+  },
+  {
+    version: '3.2.0',
+    date: '2025-08-22',
+    added: [
+      '视频源管理支持批量启用、禁用、删除',
+      '用户管理支持批量设置用户组',
+      '视频卡片右键/长按菜单新增新标签页播放',
     ],
     changed: [
-      "禁用 flv 直播，仅支持 m3u8 直播",
-      "降低代理 ts 分片的内存占用"
+      '视频卡片移动端 hover 时仅保留播放按钮',
+      '微调管理页面 UI 和视频卡片右键/长按菜单中的收藏样式',
+    ],
+    fixed: ['修复了搜索栏 enter 键自动选中第一个建议项的问题'],
+  },
+  {
+    version: '3.1.2',
+    date: '2025-08-22',
+    added: [
+      // 无新增内容
+    ],
+    changed: [
+      // 无变更内容
+    ],
+    fixed: ['修复移动端卡片无法点击的问题'],
+  },
+  {
+    version: '3.1.1',
+    date: '2025-08-21',
+    added: [
+      // 无新增内容
+    ],
+    changed: [
+      // 无变更内容
+    ],
+    fixed: ['修复了视频卡片 hover 的非播放按钮点击后进入播放页的问题'],
+  },
+  {
+    version: '3.1.0',
+    date: '2025-08-21',
+    added: [
+      '增加用户组管理和用户组播放源限制',
+      '增加管理面板视频源有效性检查',
+      '搜索栏增加一键删除按钮',
+    ],
+    changed: [
+      '放宽授权心跳对于网络问题的判断标准',
+      '统一管理面板弹窗使用 createPortal',
+      'VideoCard 允许移动端响应 hover 事件',
+      '移动端布局 header 常驻，搜索按钮移动到 header 右侧',
+      '调大搜索接口超时时间',
+    ],
+    fixed: ['修复 bangumi 返回的整数评分无小数导致 UI 不对齐的问题'],
+  },
+  {
+    version: '3.0.2',
+    date: '2025-08-20',
+    added: [
+      // 无新增内容
+    ],
+    changed: ['优化机器码生成逻辑'],
+    fixed: ['修复 redis url 不支持 rediss 协议的问题'],
+  },
+  {
+    version: '3.0.1',
+    date: '2025-08-20',
+    added: [
+      // 无新增内容
+    ],
+    changed: [
+      // 无变更内容
+    ],
+    fixed: ['修复授权初始化错误'],
+  },
+  {
+    version: '3.0.0',
+    date: '2025-08-20',
+    added: ['防盗卖加固', '支持自定义用户可用视频源'],
+    changed: ['右键视频卡片可弹出操作菜单'],
+    fixed: ['过滤掉集数为 0 的搜索结果'],
+  },
+  {
+    version: '2.7.1',
+    date: '2025-08-17',
+    added: [
+      // 无新增内容
+    ],
+    changed: [
+      // 无变更内容
+    ],
+    fixed: ['修复 iOS 下版本面板可穿透滚动背景的问题'],
+  },
+  {
+    version: '2.7.0',
+    date: '2025-08-17',
+    added: ['视频卡片新增移动端操作面板，优化触控屏操作体验'],
+    changed: ['优化集数标题的匹配和展示逻辑'],
+    fixed: ['修复设置面板和修改密码面板背景可被拖动的问题'],
+  },
+  {
+    version: '2.6.0',
+    date: '2025-08-17',
+    added: [
+      '新增搜索流式输出接口，并设置流式搜索为默认搜索接口，优化搜索体验',
+      '新增源站搜索结果内存缓存，粒度为源站+关键词+页数，缓存 10 分钟',
+      '新增豆瓣 CDN provided by @JohnsonRan',
+    ],
+    changed: [
+      '搜索结果默认为无排序状态，不再默认按照年份排序',
+      '常规搜索接口无结果时，不再设置响应的缓存头',
+      '移除豆瓣数据源中的 cors-anywhere 方式',
+    ],
+    fixed: [
+      '数据导出时导出站长密码，保证迁移到新账户时原站长用户可正常登录',
+      '聚合卡片优化移动端源信息展示',
+    ],
+  },
+  {
+    version: '2.4.1',
+    date: '2025-08-15',
+    added: [
+      // 无新增内容
+    ],
+    changed: [
+      // 无变更内容
+    ],
+    fixed: [
+      '对导入和 db 读取的配置文件做自检，防止 USERNAME 修改导致用户状态异常',
+    ],
+  },
+  {
+    version: '2.4.0',
+    date: '2025-08-15',
+    added: ['支持 kvrocks 存储（持久化 kv 存储）'],
+    changed: [
+      // 无变更内容
+    ],
+    fixed: [
+      '修复搜索结果排序不稳定的问题',
+      '导入数据时同时更新内存缓存的管理员配置',
+    ],
+  },
+  {
+    version: '2.3.0',
+    date: '2025-08-15',
+    added: ['支持站长导入导出整站数据'],
+    changed: ['仅允许站长操作配置文件', '微调搜索结果过滤面板的移动端样式'],
+    fixed: [
+      // 无修复内容
+    ],
+  },
+  {
+    version: '2.2.1',
+    date: '2025-08-14',
+    added: [
+      // 无新增内容
+    ],
+    changed: [
+      // 无变更内容
+    ],
+    fixed: ['修复了筛选 panel 打开时滚动页面 panel 不跟随的问题'],
+  },
+  {
+    version: '2.2.0',
+    date: '2025-08-14',
+    added: [
+      '搜索结果支持按播放源、标题和年份筛选，支持按年份排序',
+      '搜索界面视频卡片展示年份信息，聚合卡片展示播放源',
+    ],
+    changed: [
+      // 无变更内容
+    ],
+    fixed: [
+      '修复 /api/search/resources 返回空的问题',
+      '修复 upstash 实例无法编辑自定义分类的问题',
+    ],
+  },
+  {
+    version: '2.1.0',
+    date: '2025-08-13',
+    added: ['支持通过订阅获取配置文件'],
+    changed: ['微调部分文案和 UI', '删除部分无用代码'],
+    fixed: [
+      // 无修复内容
+    ],
+  },
+  {
+    version: '2.0.1',
+    date: '2025-08-13',
+    added: [
+      // 无新增内容
+    ],
+    changed: ['版本检查和变更日志请求 Github'],
+    fixed: ['微调管理面板样式'],
+  },
+  {
+    version: '2.0.0',
+    date: '2025-08-13',
+    added: [
+      '支持配置文件在线配置和编辑',
+      '搜索页搜索框实时联想',
+      '去除对 localstorage 模式的支持',
+    ],
+    changed: ['播放记录删除按钮改为垃圾桶图标以消除歧义'],
+    fixed: ['限制设置面板的最大长度，防止超出视口'],
+  },
+  {
+    version: '1.1.1',
+    date: '2025-08-12',
+    added: [
+      // 无新增内容
+    ],
+    changed: ['修正 zwei 提供的 cors proxy 地址', '移除废弃代码'],
+    fixed: ['[运维] docker workflow release 日期使用东八区日期'],
+  },
+  {
+    version: '1.1.0',
+    date: '2025-08-12',
+    added: ['每日新番放送功能，展示每日新番放送的番剧'],
+    changed: [
+      // 无变更内容
+    ],
+    fixed: ['修复远程 CHANGELOG 无法提取变更内容的问题'],
+  },
+  {
+    version: '1.0.5',
+    date: '2025-08-12',
+    added: [
+      // 无新增内容
+    ],
+    changed: ['实现基于 Git 标签的自动 Release 工作流'],
+    fixed: [
+      // 无修复内容
+    ],
+  },
+  {
+    version: '1.0.4',
+    date: '2025-08-11',
+    added: ['优化版本管理工作流，实现单点修改'],
+    changed: ['版本号现在从 CHANGELOG 自动提取，无需手动维护 VERSION.txt'],
+    fixed: [
+      // 无修复内容
+    ],
+  },
+  {
+    version: '1.0.3',
+    date: '2025-08-11',
+    added: [
+      // 无新增内容
+    ],
+    changed: ['升级播放器 Artplayer 至版本 5.2.5'],
+    fixed: [
+      // 无修复内容
+    ],
+  },
+  {
+    version: '1.0.2',
+    date: '2025-08-11',
+    added: [
+      // 无新增内容
+    ],
+    changed: [
+      '版本号比较机制恢复为数字比较，仅当最新版本大于本地版本时才认为有更新',
+      '[运维] 自动替换 version.ts 中的版本号为 VERSION.txt 中的版本号',
     ],
     fixed: [
       // 无修复内容
-    ]
+    ],
   },
   {
-    version: "4.2.1",
-    date: "2025-08-26",
+    version: '1.0.1',
+    date: '2025-08-11',
     added: [
       // 无新增内容
     ],
     changed: [
       // 无变更内容
     ],
-    fixed: [
-      "修复直播源加载失败或离开页面后依然无限加载的问题"
-    ]
+    fixed: ['修复版本检查功能，只要与最新版本号不一致即认为有更新'],
   },
   {
-    version: "4.2.0",
-    date: "2025-08-26",
+    version: '1.0.0',
+    date: '2025-08-10',
     added: [
-      "支持 flv 直播和直播地址解析到 mp4 的处理",
-      "增加直播台标的 proxy 以防止 cors",
-      "支持播放页选集分组的滚动翻页"
-    ],
-    changed: [
-      "管理后台页面的按钮增加加载中的 UI"
-    ],
-    fixed: [
-      "/api/proxy/m3u8 仅对 m3u8 内容反序列化，降低内存和 CPU 消耗"
-    ]
-  },
-  {
-    version: "4.1.1",
-    date: "2025-08-25",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      "增加对 url-tvg 和多 epg url 的支持"
-    ],
-    fixed: [
-      "修复 epg 数据清洗中去重叠逻辑未考虑日期导致的问题"
-    ]
-  },
-  {
-    version: "4.1.0",
-    date: "2025-08-24",
-    added: [
-      "解析 m3u 自带的 epg 和自定义 epg，增加今日节目单"
-    ],
-    changed: [
-      "直播源数据刷新改为并发刷新"
-    ],
-    fixed: [
-      // 无修复内容
-    ]
-  },
-  {
-    version: "4.0.0",
-    date: "2025-08-24",
-    added: [
-      "增加 iptv 订阅和播放功能"
-    ],
-    changed: [
-      "搜索页面视频卡片移动端/右键菜单添加豆瓣链接",
-      "搜索建议遵循色情过滤"
-    ],
-    fixed: [
-      // 无修复内容
-    ]
-  },
-  {
-    version: "3.2.1",
-    date: "2025-08-22",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      "新增色色过滤分类",
-      "调整搜索建议框层级"
-    ],
-    fixed: [
-      // 无修复内容
-    ]
-  },
-  {
-    version: "3.2.0",
-    date: "2025-08-22",
-    added: [
-      "视频源管理支持批量启用、禁用、删除",
-      "用户管理支持批量设置用户组",
-      "视频卡片右键/长按菜单新增新标签页播放"
-    ],
-    changed: [
-      "视频卡片移动端 hover 时仅保留播放按钮",
-      "微调管理页面 UI 和视频卡片右键/长按菜单中的收藏样式"
-    ],
-    fixed: [
-      "修复了搜索栏 enter 键自动选中第一个建议项的问题"
-    ]
-  },
-  {
-    version: "3.1.2",
-    date: "2025-08-22",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      // 无变更内容
-    ],
-    fixed: [
-      "修复移动端卡片无法点击的问题"
-    ]
-  },
-  {
-    version: "3.1.1",
-    date: "2025-08-21",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      // 无变更内容
-    ],
-    fixed: [
-      "修复了视频卡片 hover 的非播放按钮点击后进入播放页的问题"
-    ]
-  },
-  {
-    version: "3.1.0",
-    date: "2025-08-21",
-    added: [
-      "增加用户组管理和用户组播放源限制",
-      "增加管理面板视频源有效性检查",
-      "搜索栏增加一键删除按钮"
-    ],
-    changed: [
-      "放宽授权心跳对于网络问题的判断标准",
-      "统一管理面板弹窗使用 createPortal",
-      "VideoCard 允许移动端响应 hover 事件",
-      "移动端布局 header 常驻，搜索按钮移动到 header 右侧",
-      "调大搜索接口超时时间"
-    ],
-    fixed: [
-      "修复 bangumi 返回的整数评分无小数导致 UI 不对齐的问题"
-    ]
-  },
-  {
-    version: "3.0.2",
-    date: "2025-08-20",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      "优化机器码生成逻辑"
-    ],
-    fixed: [
-      "修复 redis url 不支持 rediss 协议的问题"
-    ]
-  },
-  {
-    version: "3.0.1",
-    date: "2025-08-20",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      // 无变更内容
-    ],
-    fixed: [
-      "修复授权初始化错误"
-    ]
-  },
-  {
-    version: "3.0.0",
-    date: "2025-08-20",
-    added: [
-      "防盗卖加固",
-      "支持自定义用户可用视频源"
-    ],
-    changed: [
-      "右键视频卡片可弹出操作菜单"
-    ],
-    fixed: [
-      "过滤掉集数为 0 的搜索结果"
-    ]
-  },
-  {
-    version: "2.7.1",
-    date: "2025-08-17",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      // 无变更内容
-    ],
-    fixed: [
-      "修复 iOS 下版本面板可穿透滚动背景的问题"
-    ]
-  },
-  {
-    version: "2.7.0",
-    date: "2025-08-17",
-    added: [
-      "视频卡片新增移动端操作面板，优化触控屏操作体验"
-    ],
-    changed: [
-      "优化集数标题的匹配和展示逻辑"
-    ],
-    fixed: [
-      "修复设置面板和修改密码面板背景可被拖动的问题"
-    ]
-  },
-  {
-    version: "2.6.0",
-    date: "2025-08-17",
-    added: [
-      "新增搜索流式输出接口，并设置流式搜索为默认搜索接口，优化搜索体验",
-      "新增源站搜索结果内存缓存，粒度为源站+关键词+页数，缓存 10 分钟",
-      "新增豆瓣 CDN provided by @JohnsonRan"
-    ],
-    changed: [
-      "搜索结果默认为无排序状态，不再默认按照年份排序",
-      "常规搜索接口无结果时，不再设置响应的缓存头",
-      "移除豆瓣数据源中的 cors-anywhere 方式"
-    ],
-    fixed: [
-      "数据导出时导出站长密码，保证迁移到新账户时原站长用户可正常登录",
-      "聚合卡片优化移动端源信息展示"
-    ]
-  },
-  {
-    version: "2.4.1",
-    date: "2025-08-15",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      // 无变更内容
-    ],
-    fixed: [
-      "对导入和 db 读取的配置文件做自检，防止 USERNAME 修改导致用户状态异常"
-    ]
-  },
-  {
-    version: "2.4.0",
-    date: "2025-08-15",
-    added: [
-      "支持 kvrocks 存储（持久化 kv 存储）"
-    ],
-    changed: [
-      // 无变更内容
-    ],
-    fixed: [
-      "修复搜索结果排序不稳定的问题",
-      "导入数据时同时更新内存缓存的管理员配置"
-    ]
-  },
-  {
-    version: "2.3.0",
-    date: "2025-08-15",
-    added: [
-      "支持站长导入导出整站数据"
-    ],
-    changed: [
-      "仅允许站长操作配置文件",
-      "微调搜索结果过滤面板的移动端样式"
-    ],
-    fixed: [
-      // 无修复内容
-    ]
-  },
-  {
-    version: "2.2.1",
-    date: "2025-08-14",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      // 无变更内容
-    ],
-    fixed: [
-      "修复了筛选 panel 打开时滚动页面 panel 不跟随的问题"
-    ]
-  },
-  {
-    version: "2.2.0",
-    date: "2025-08-14",
-    added: [
-      "搜索结果支持按播放源、标题和年份筛选，支持按年份排序",
-      "搜索界面视频卡片展示年份信息，聚合卡片展示播放源"
-    ],
-    changed: [
-      // 无变更内容
-    ],
-    fixed: [
-      "修复 /api/search/resources 返回空的问题",
-      "修复 upstash 实例无法编辑自定义分类的问题"
-    ]
-  },
-  {
-    version: "2.1.0",
-    date: "2025-08-13",
-    added: [
-      "支持通过订阅获取配置文件"
-    ],
-    changed: [
-      "微调部分文案和 UI",
-      "删除部分无用代码"
-    ],
-    fixed: [
-      // 无修复内容
-    ]
-  },
-  {
-    version: "2.0.1",
-    date: "2025-08-13",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      "版本检查和变更日志请求 Github"
-    ],
-    fixed: [
-      "微调管理面板样式"
-    ]
-  },
-  {
-    version: "2.0.0",
-    date: "2025-08-13",
-    added: [
-      "支持配置文件在线配置和编辑",
-      "搜索页搜索框实时联想",
-      "去除对 localstorage 模式的支持"
-    ],
-    changed: [
-      "播放记录删除按钮改为垃圾桶图标以消除歧义"
-    ],
-    fixed: [
-      "限制设置面板的最大长度，防止超出视口"
-    ]
-  },
-  {
-    version: "1.1.1",
-    date: "2025-08-12",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      "修正 zwei 提供的 cors proxy 地址",
-      "移除废弃代码"
-    ],
-    fixed: [
-      "[运维] docker workflow release 日期使用东八区日期"
-    ]
-  },
-  {
-    version: "1.1.0",
-    date: "2025-08-12",
-    added: [
-      "每日新番放送功能，展示每日新番放送的番剧"
-    ],
-    changed: [
-      // 无变更内容
-    ],
-    fixed: [
-      "修复远程 CHANGELOG 无法提取变更内容的问题"
-    ]
-  },
-  {
-    version: "1.0.5",
-    date: "2025-08-12",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      "实现基于 Git 标签的自动 Release 工作流"
-    ],
-    fixed: [
-      // 无修复内容
-    ]
-  },
-  {
-    version: "1.0.4",
-    date: "2025-08-11",
-    added: [
-      "优化版本管理工作流，实现单点修改"
-    ],
-    changed: [
-      "版本号现在从 CHANGELOG 自动提取，无需手动维护 VERSION.txt"
-    ],
-    fixed: [
-      // 无修复内容
-    ]
-  },
-  {
-    version: "1.0.3",
-    date: "2025-08-11",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      "升级播放器 Artplayer 至版本 5.2.5"
-    ],
-    fixed: [
-      // 无修复内容
-    ]
-  },
-  {
-    version: "1.0.2",
-    date: "2025-08-11",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      "版本号比较机制恢复为数字比较，仅当最新版本大于本地版本时才认为有更新",
-      "[运维] 自动替换 version.ts 中的版本号为 VERSION.txt 中的版本号"
-    ],
-    fixed: [
-      // 无修复内容
-    ]
-  },
-  {
-    version: "1.0.1",
-    date: "2025-08-11",
-    added: [
-      // 无新增内容
-    ],
-    changed: [
-      // 无变更内容
-    ],
-    fixed: [
-      "修复版本检查功能，只要与最新版本号不一致即认为有更新"
-    ]
-  },
-  {
-    version: "1.0.0",
-    date: "2025-08-10",
-    added: [
-      "基于 Semantic Versioning 的版本号机制",
-      "版本信息面板，展示本地变更日志和远程更新日志"
+      '基于 Semantic Versioning 的版本号机制',
+      '版本信息面板，展示本地变更日志和远程更新日志',
     ],
     changed: [
       // 无变更内容
     ],
     fixed: [
       // 无修复内容
-    ]
-  }
+    ],
+  },
 ];
 
 export default changelog;

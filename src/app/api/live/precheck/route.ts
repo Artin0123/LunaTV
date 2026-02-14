@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getConfig } from '@/lib/config';
+import { getLiveDefaultUA, getLiveSourceByKey } from '@/lib/live';
 
 export const runtime = 'nodejs';
 
@@ -14,41 +14,61 @@ export async function GET(request: NextRequest) {
   if (!url) {
     return NextResponse.json({ error: 'Missing url' }, { status: 400 });
   }
-  const config = await getConfig();
-  const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
+  const liveSource = await getLiveSourceByKey(source);
   if (!liveSource) {
     return NextResponse.json({ error: 'Source not found' }, { status: 404 });
   }
-  const ua = liveSource.ua || 'AptvPlayer/1.4.10';
+  const ua = liveSource.ua || getLiveDefaultUA();
 
   try {
     const decodedUrl = decodeURIComponent(url);
-
-    const response = await fetch(decodedUrl, {
+    let response = await fetch(decodedUrl, {
+      method: 'HEAD',
       cache: 'no-cache',
       redirect: 'follow',
-      credentials: 'same-origin',
       headers: {
         'User-Agent': ua,
       },
     });
 
-    if (!response.ok) {
-      return NextResponse.json({ error: 'Failed to fetch', message: response.statusText }, { status: 500 });
+    // 某些源不支持 HEAD，回退到 GET。
+    if (response.status === 405 || response.status === 501) {
+      response = await fetch(decodedUrl, {
+        method: 'GET',
+        cache: 'no-cache',
+        redirect: 'follow',
+        headers: {
+          'User-Agent': ua,
+        },
+      });
     }
 
-    const contentType = response.headers.get('Content-Type');
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: 'Failed to fetch', message: response.statusText },
+        { status: 500 },
+      );
+    }
+
+    const contentType =
+      response.headers.get('Content-Type')?.toLowerCase() || '';
     if (response.body) {
       response.body.cancel();
     }
-    if (contentType?.includes('video/mp4')) {
+    if (contentType.includes('video/mp4')) {
       return NextResponse.json({ success: true, type: 'mp4' }, { status: 200 });
     }
-    if (contentType?.includes('video/x-flv')) {
+    if (contentType.includes('video/x-flv')) {
       return NextResponse.json({ success: true, type: 'flv' }, { status: 200 });
     }
     return NextResponse.json({ success: true, type: 'm3u8' }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch', message: error }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to fetch',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 },
+    );
   }
 }

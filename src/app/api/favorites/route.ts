@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { saveFavoriteSchema, validateBody } from '@/lib/api-schemas';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const user = config.UserConfig.Users.find(
-        (u) => u.username === authInfo.username
+        (u) => u.username === authInfo.username,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
       if (!source || !id) {
         return NextResponse.json(
           { error: 'Invalid key format' },
-          { status: 400 }
+          { status: 400 },
         );
       }
       const fav = await db.getFavorite(authInfo.username, source, id);
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
     console.error('获取收藏失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const user = config.UserConfig.Users.find(
-        (u) => u.username === authInfo.username
+        (u) => u.username === authInfo.username,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -93,30 +94,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { key, favorite }: { key: string; favorite: Favorite } = body;
-
-    if (!key || !favorite) {
-      return NextResponse.json(
-        { error: 'Missing key or favorite' },
-        { status: 400 }
-      );
+    const parsed = validateBody(saveFavoriteSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
-    // 验证必要字段
-    if (!favorite.title || !favorite.source_name) {
-      return NextResponse.json(
-        { error: 'Invalid favorite data' },
-        { status: 400 }
-      );
-    }
-
+    const { key, favorite } = parsed.data;
     const [source, id] = key.split('+');
-    if (!source || !id) {
-      return NextResponse.json(
-        { error: 'Invalid key format' },
-        { status: 400 }
-      );
-    }
 
     const finalFavorite = {
       ...favorite,
@@ -130,7 +114,7 @@ export async function POST(request: NextRequest) {
     console.error('保存收藏失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -153,7 +137,7 @@ export async function DELETE(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const user = config.UserConfig.Users.find(
-        (u) => u.username === authInfo.username
+        (u) => u.username === authInfo.username,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -173,7 +157,7 @@ export async function DELETE(request: NextRequest) {
       if (!source || !id) {
         return NextResponse.json(
           { error: 'Invalid key format' },
-          { status: 400 }
+          { status: 400 },
         );
       }
       await db.deleteFavorite(username, source, id);
@@ -184,7 +168,7 @@ export async function DELETE(request: NextRequest) {
         Object.keys(all).map(async (k) => {
           const [s, i] = k.split('+');
           if (s && i) await db.deleteFavorite(username, s, i);
-        })
+        }),
       );
     }
 
@@ -193,7 +177,7 @@ export async function DELETE(request: NextRequest) {
     console.error('删除收藏失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

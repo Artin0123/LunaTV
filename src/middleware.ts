@@ -35,27 +35,31 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 其他模式：只验证签名
-  // 检查是否有用户名（非localStorage模式下密码不存储在cookie中）
+  // 其他模式：验证签名 + 时间戳
   if (!authInfo.username || !authInfo.signature) {
     return handleAuthFailure(request, pathname);
   }
 
-  // 验证签名（如果存在）
-  if (authInfo.signature) {
+  // 验证签名（包含时间戳防重放）
+  if (authInfo.signature && authInfo.timestamp) {
+    // 检查签名是否过期（7 天）
+    const SIGNATURE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+    if (Date.now() - authInfo.timestamp > SIGNATURE_MAX_AGE_MS) {
+      return handleAuthFailure(request, pathname);
+    }
+
     const isValidSignature = await verifySignature(
-      authInfo.username,
+      `${authInfo.username}:${authInfo.timestamp}`,
       authInfo.signature,
-      process.env.PASSWORD || ''
+      process.env.PASSWORD || '',
     );
 
-    // 签名验证通过即可
     if (isValidSignature) {
       return NextResponse.next();
     }
   }
 
-  // 签名验证失败或不存在签名
+  // 签名验证失败或缺少签名/时间戳
   return handleAuthFailure(request, pathname);
 }
 
@@ -63,7 +67,7 @@ export async function middleware(request: NextRequest) {
 async function verifySignature(
   data: string,
   signature: string,
-  secret: string
+  secret: string,
 ): Promise<boolean> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
@@ -76,12 +80,12 @@ async function verifySignature(
       keyData,
       { name: 'HMAC', hash: 'SHA-256' },
       false,
-      ['verify']
+      ['verify'],
     );
 
     // 将十六进制字符串转换为Uint8Array
     const signatureBuffer = new Uint8Array(
-      signature.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || []
+      signature.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || [],
     );
 
     // 验证签名
@@ -89,7 +93,7 @@ async function verifySignature(
       'HMAC',
       key,
       signatureBuffer,
-      messageData
+      messageData,
     );
   } catch (error) {
     console.error('签名验证失败:', error);
@@ -100,7 +104,7 @@ async function verifySignature(
 // 处理认证失败的情况
 function handleAuthFailure(
   request: NextRequest,
-  pathname: string
+  pathname: string,
 ): NextResponse {
   // 如果是 API 路由，返回 401 状态码
   if (pathname.startsWith('/api')) {

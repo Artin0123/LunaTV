@@ -1,9 +1,9 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
-import * as crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig, refineConfig } from '@/lib/config';
+import { decodeSubscriptionConfig } from '@/lib/config-subscription';
 import { db } from '@/lib/db';
 import { fetchVideoDetail } from '@/lib/fetchVideoDetail';
 import { refreshLiveChannels } from '@/lib/live';
@@ -12,11 +12,23 @@ import { SearchResult } from '@/lib/types';
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  console.log(request.url);
+  // CRON_SECRET 认证：防止外部随意触发 cron 任务
+  // Vercel Cron Jobs 会自动发送 Authorization: Bearer <CRON_SECRET>
+  const cronSecret = process.env.CRON_SECRET;
+  if (cronSecret) {
+    const authHeader = request.headers.get('authorization');
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 },
+      );
+    }
+  }
+
   try {
     console.log('Cron job triggered:', new Date().toISOString());
 
-    cronJob();
+    await cronJob();
 
     return NextResponse.json({
       success: true,
@@ -33,7 +45,7 @@ export async function GET(request: NextRequest) {
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -49,13 +61,16 @@ async function refreshAllLiveChannels() {
 
   // 并发刷新所有启用的直播源
   const refreshPromises = (config.LiveConfig || [])
-    .filter(liveInfo => !liveInfo.disabled)
+    .filter((liveInfo) => !liveInfo.disabled)
     .map(async (liveInfo) => {
       try {
         const nums = await refreshLiveChannels(liveInfo);
         liveInfo.channelNumber = nums;
       } catch (error) {
-        console.error(`刷新直播源失败 [${liveInfo.name || liveInfo.key}]:`, error);
+        console.error(
+          `刷新直播源失败 [${liveInfo.name || liveInfo.key}]:`,
+          error,
+        );
         liveInfo.channelNumber = 0;
       }
     });
@@ -69,7 +84,12 @@ async function refreshAllLiveChannels() {
 
 async function refreshConfig() {
   let config = await getConfig();
-  if (config && config.ConfigSubscribtion && config.ConfigSubscribtion.URL && config.ConfigSubscribtion.AutoUpdate) {
+  if (
+    config &&
+    config.ConfigSubscribtion &&
+    config.ConfigSubscribtion.URL &&
+    config.ConfigSubscribtion.AutoUpdate
+  ) {
     try {
       const response = await fetch(config.ConfigSubscribtion.URL);
 
@@ -79,16 +99,8 @@ async function refreshConfig() {
 
       const configContent = await response.text();
 
-      // 对 configContent 进行 base58 解码
-      let decodedContent;
-      try {
-        const bs58 = (await import('bs58')).default;
-        const decodedBytes = bs58.decode(configContent);
-        decodedContent = new TextDecoder().decode(decodedBytes);
-      } catch (decodeError) {
-        console.warn('Base58 解码失败:', decodeError);
-        throw decodeError;
-      }
+      const decodedResult = await decodeSubscriptionConfig(configContent);
+      const decodedContent = decodedResult.content;
 
       try {
         JSON.parse(decodedContent);
@@ -120,7 +132,7 @@ async function refreshRecordAndFavorites() {
     const getDetail = async (
       source: string,
       id: string,
-      fallbackTitle: string
+      fallbackTitle: string,
     ): Promise<SearchResult | null> => {
       const key = `${source}+${id}`;
       let promise = detailCache.get(key);
@@ -182,7 +194,7 @@ async function refreshRecordAndFavorites() {
                 search_title: record.search_title,
               });
               console.log(
-                `更新播放记录: ${record.title} (${record.total_episodes} -> ${episodeCount})`
+                `更新播放记录: ${record.title} (${record.total_episodes} -> ${episodeCount})`,
               );
             }
 
@@ -202,7 +214,7 @@ async function refreshRecordAndFavorites() {
       try {
         let favorites = await db.getAllFavorites(user);
         favorites = Object.fromEntries(
-          Object.entries(favorites).filter(([_, fav]) => fav.origin !== 'live')
+          Object.entries(favorites).filter(([_, fav]) => fav.origin !== 'live'),
         );
         const totalFavorites = Object.keys(favorites).length;
         let processedFavorites = 0;
@@ -233,7 +245,7 @@ async function refreshRecordAndFavorites() {
                 search_title: fav.search_title,
               });
               console.log(
-                `更新收藏: ${fav.title} (${fav.total_episodes} -> ${favEpisodeCount})`
+                `更新收藏: ${fav.title} (${fav.total_episodes} -> ${favEpisodeCount})`,
               );
             }
 

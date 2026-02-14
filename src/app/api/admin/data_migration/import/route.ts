@@ -8,10 +8,22 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { configSelfCheck, setCachedConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto';
 import { db } from '@/lib/db';
+import { Favorite, PlayRecord, SkipConfig } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
 const gunzipAsync = promisify(gunzip);
+
+function parseStorageKey(key: string): { source: string; id: string } | null {
+  const separatorIndex = key.indexOf('+');
+  if (separatorIndex <= 0 || separatorIndex >= key.length - 1) {
+    return null;
+  }
+  return {
+    source: key.slice(0, separatorIndex),
+    id: key.slice(separatorIndex + 1),
+  };
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,7 +32,7 @@ export async function POST(req: NextRequest) {
     if (storageType === 'localstorage') {
       return NextResponse.json(
         { error: '不支持本地存储进行数据迁移' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -32,7 +44,10 @@ export async function POST(req: NextRequest) {
 
     // 检查用户权限（只有站长可以导入数据）
     if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json({ error: '权限不足，只有站长可以导入数据' }, { status: 401 });
+      return NextResponse.json(
+        { error: '权限不足，只有站长可以导入数据' },
+        { status: 401 },
+      );
     }
 
     // 解析表单数据
@@ -56,7 +71,10 @@ export async function POST(req: NextRequest) {
     try {
       decryptedData = SimpleCrypto.decrypt(encryptedData, password);
     } catch (error) {
-      return NextResponse.json({ error: '解密失败，请检查密码是否正确' }, { status: 400 });
+      return NextResponse.json(
+        { error: '解密失败，请检查密码是否正确' },
+        { status: 400 },
+      );
     }
 
     // 解压缩数据
@@ -73,7 +91,11 @@ export async function POST(req: NextRequest) {
     }
 
     // 验证数据格式
-    if (!importData.data || !importData.data.adminConfig || !importData.data.userData) {
+    if (
+      !importData.data ||
+      !importData.data.adminConfig ||
+      !importData.data.userData
+    ) {
       return NextResponse.json({ error: '备份文件格式无效' }, { status: 400 });
     }
 
@@ -97,31 +119,57 @@ export async function POST(req: NextRequest) {
 
       // 导入播放记录
       if (user.playRecords) {
-        for (const [key, record] of Object.entries(user.playRecords)) {
-          await (db as any).storage.setPlayRecord(username, key, record);
+        for (const [key, record] of Object.entries(
+          user.playRecords as Record<string, PlayRecord>,
+        )) {
+          const parsedKey = parseStorageKey(key);
+          if (!parsedKey) continue;
+          await db.savePlayRecord(
+            username,
+            parsedKey.source,
+            parsedKey.id,
+            record,
+          );
         }
       }
 
       // 导入收藏夹
       if (user.favorites) {
-        for (const [key, favorite] of Object.entries(user.favorites)) {
-          await (db as any).storage.setFavorite(username, key, favorite);
+        for (const [key, favorite] of Object.entries(
+          user.favorites as Record<string, Favorite>,
+        )) {
+          const parsedKey = parseStorageKey(key);
+          if (!parsedKey) continue;
+          await db.saveFavorite(
+            username,
+            parsedKey.source,
+            parsedKey.id,
+            favorite,
+          );
         }
       }
 
       // 导入搜索历史
       if (user.searchHistory && Array.isArray(user.searchHistory)) {
-        for (const keyword of user.searchHistory.reverse()) { // 反转以保持顺序
+        for (const keyword of user.searchHistory.reverse()) {
+          // 反转以保持顺序
           await db.addSearchHistory(username, keyword);
         }
       }
 
       // 导入跳过片头片尾配置
       if (user.skipConfigs) {
-        for (const [key, skipConfig] of Object.entries(user.skipConfigs)) {
-          const [source, id] = key.split('+');
-          if (source && id) {
-            await db.setSkipConfig(username, source, id, skipConfig as any);
+        for (const [key, skipConfig] of Object.entries(
+          user.skipConfigs as Record<string, SkipConfig>,
+        )) {
+          const parsedKey = parseStorageKey(key);
+          if (parsedKey) {
+            await db.setSkipConfig(
+              username,
+              parsedKey.source,
+              parsedKey.id,
+              skipConfig,
+            );
           }
         }
       }
@@ -131,14 +179,16 @@ export async function POST(req: NextRequest) {
       message: '数据导入成功',
       importedUsers: Object.keys(userData).length,
       timestamp: importData.timestamp,
-      serverVersion: typeof importData.serverVersion === 'string' ? importData.serverVersion : '未知版本'
+      serverVersion:
+        typeof importData.serverVersion === 'string'
+          ? importData.serverVersion
+          : '未知版本',
     });
-
   } catch (error) {
     console.error('数据导入失败:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '导入失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

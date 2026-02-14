@@ -11,14 +11,28 @@ import { GlobalErrorIndicator } from '../components/GlobalErrorIndicator';
 import { SiteProvider } from '../components/SiteProvider';
 import { ThemeProvider } from '../components/ThemeProvider';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  fallback: [
+    'Segoe UI',
+    'Microsoft YaHei UI',
+    'Microsoft YaHei',
+    'Noto Sans CJK TC',
+    'Noto Sans CJK SC',
+    'Microsoft JhengHei',
+    'PingFang TC',
+    'PingFang SC',
+    'Arial',
+    'sans-serif',
+  ],
+});
 export const dynamic = 'force-dynamic';
 
 // 动态生成 metadata，支持配置更新后的标题变化
 export async function generateMetadata(): Promise<Metadata> {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
   const config = await getConfig();
-  let siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV';
+  let siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'LunaTV';
   if (storageType !== 'localstorage') {
     siteName = config.SiteConfig.SiteName;
   }
@@ -41,12 +55,13 @@ export default async function RootLayout({
 }) {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
 
-  let siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'MoonTV';
+  let siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'LunaTV';
   let announcement =
     process.env.ANNOUNCEMENT ||
     '本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。';
 
-  let doubanProxyType = process.env.NEXT_PUBLIC_DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
+  let doubanProxyType =
+    process.env.NEXT_PUBLIC_DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
   let doubanProxy = process.env.NEXT_PUBLIC_DOUBAN_PROXY || '';
   let doubanImageProxyType =
     process.env.NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE || 'cmliussss-cdn-tencent';
@@ -70,7 +85,7 @@ export default async function RootLayout({
     doubanImageProxy = config.SiteConfig.DoubanImageProxy;
     disableYellowFilter = config.SiteConfig.DisableYellowFilter;
     customCategories = config.CustomCategories.filter(
-      (category) => !category.disabled
+      (category) => !category.disabled,
     ).map((category) => ({
       name: category.name || '',
       type: category.type,

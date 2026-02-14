@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { saveSkipConfigSchema, validateBody } from '@/lib/api-schemas';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const user = config.UserConfig.Users.find(
-        (u) => u.username === authInfo.username
+        (u) => u.username === authInfo.username,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
     console.error('获取跳过片头片尾配置失败:', error);
     return NextResponse.json(
       { error: '获取跳过片头片尾配置失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const user = adminConfig.UserConfig.Users.find(
-        (u) => u.username === authInfo.username
+        (u) => u.username === authInfo.username,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -74,11 +75,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { key, config } = body;
-
-    if (!key || !config) {
-      return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
+    const parsed = validateBody(saveSkipConfigSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
+    const { key, config } = parsed.data;
 
     // 解析key为source和id
     const [source, id] = key.split('+');
@@ -88,9 +89,9 @@ export async function POST(request: NextRequest) {
 
     // 验证配置格式
     const skipConfig: SkipConfig = {
-      enable: Boolean(config.enable),
-      intro_time: Number(config.intro_time) || 0,
-      outro_time: Number(config.outro_time) || 0,
+      enable: config.enable ?? true,
+      intro_time: config.intro_time ?? 0,
+      outro_time: config.outro_time ?? 0,
     };
 
     await db.setSkipConfig(authInfo.username, source, id, skipConfig);
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
     console.error('保存跳过片头片尾配置失败:', error);
     return NextResponse.json(
       { error: '保存跳过片头片尾配置失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -116,7 +117,7 @@ export async function DELETE(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const user = adminConfig.UserConfig.Users.find(
-        (u) => u.username === authInfo.username
+        (u) => u.username === authInfo.username,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -146,7 +147,7 @@ export async function DELETE(request: NextRequest) {
     console.error('删除跳过片头片尾配置失败:', error);
     return NextResponse.json(
       { error: '删除跳过片头片尾配置失败' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

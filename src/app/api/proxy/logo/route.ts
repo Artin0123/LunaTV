@@ -2,7 +2,7 @@
 
 import { NextResponse } from 'next/server';
 
-import { getConfig } from '@/lib/config';
+import { getLiveDefaultUA, getLiveSourceByKey } from '@/lib/live';
 
 export const runtime = 'nodejs';
 
@@ -15,9 +15,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing image URL' }, { status: 400 });
   }
 
-  const config = await getConfig();
-  const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
-  const ua = liveSource?.ua || 'AptvPlayer/1.4.10';
+  const liveSource = await getLiveSourceByKey(source);
+  const ua = liveSource?.ua || getLiveDefaultUA();
 
   try {
     const decodedUrl = decodeURIComponent(imageUrl);
@@ -33,7 +32,7 @@ export async function GET(request: Request) {
     if (!imageResponse.ok) {
       return NextResponse.json(
         { error: imageResponse.statusText },
-        { status: imageResponse.status }
+        { status: imageResponse.status },
       );
     }
 
@@ -42,7 +41,7 @@ export async function GET(request: Request) {
     if (!imageResponse.body) {
       return NextResponse.json(
         { error: 'Image response has no body' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -63,7 +62,7 @@ export async function GET(request: Request) {
   } catch (error) {
     return NextResponse.json(
       { error: 'Error fetching image' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

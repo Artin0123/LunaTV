@@ -1,8 +1,8 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { getConfig } from "@/lib/config";
+import { getLiveDefaultUA, getLiveSourceByKey } from '@/lib/live';
 
 export const runtime = 'nodejs';
 
@@ -14,12 +14,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing url' }, { status: 400 });
   }
 
-  const config = await getConfig();
-  const liveSource = config.LiveConfig?.find((s: any) => s.key === source);
+  const liveSource = await getLiveSourceByKey(source);
   if (!liveSource) {
     return NextResponse.json({ error: 'Source not found' }, { status: 404 });
   }
-  const ua = liveSource.ua || 'AptvPlayer/1.4.10';
+  const ua = liveSource.ua || getLiveDefaultUA();
 
   try {
     const decodedUrl = decodeURIComponent(url);
@@ -30,7 +29,10 @@ export async function GET(request: Request) {
       },
     });
     if (!response.ok) {
-      return NextResponse.json({ error: 'Failed to fetch key' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to fetch key' },
+        { status: 500 },
+      );
     }
     const keyData = await response.arrayBuffer();
     return new Response(keyData, {
@@ -38,7 +40,7 @@ export async function GET(request: Request) {
         'Content-Type': 'application/octet-stream',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Cache-Control': 'public, max-age=3600'
+        'Cache-Control': 'public, max-age=3600',
       },
     });
   } catch (error) {

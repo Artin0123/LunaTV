@@ -1,15 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
-import he from 'he';
 import Hls from 'hls.js';
 
 function getDoubanImageProxyConfig(): {
   proxyType:
-  | 'direct'
-  | 'server'
-  | 'img3'
-  | 'cmliussss-cdn-tencent'
-  | 'cmliussss-cdn-ali'
-  | 'custom';
+    | 'direct'
+    | 'server'
+    | 'img3'
+    | 'cmliussss-cdn-tencent'
+    | 'cmliussss-cdn-ali'
+    | 'custom';
   proxyUrl: string;
 } {
   const doubanImageProxyType =
@@ -46,12 +45,12 @@ export function processImageUrl(originalUrl: string): string {
     case 'cmliussss-cdn-tencent':
       return originalUrl.replace(
         /img\d+\.doubanio\.com/g,
-        'img.doubanio.cmliussss.net'
+        'img.doubanio.cmliussss.net',
       );
     case 'cmliussss-cdn-ali':
       return originalUrl.replace(
         /img\d+\.doubanio\.com/g,
-        'img.doubanio.cmliussss.com'
+        'img.doubanio.cmliussss.com',
       );
     case 'custom':
       return `${proxyUrl}${encodeURIComponent(originalUrl)}`;
@@ -211,8 +210,9 @@ export async function getVideoResolutionFromM3u8(m3u8Url: string): Promise<{
     });
   } catch (error) {
     throw new Error(
-      `Error getting video resolution: ${error instanceof Error ? error.message : String(error)
-      }`
+      `Error getting video resolution: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
     );
   }
 }
@@ -227,6 +227,18 @@ export function cleanHtmlTags(text: string): string {
     .replace(/^\n+|\n+$/g, '') // 去掉首尾换行
     .trim(); // 去掉首尾空格
 
-  // 使用 he 库解码 HTML 实体
-  return he.decode(cleanedText);
+  // 使用浏览器原生方式解码 HTML 实体（&amp; → & 等）
+  if (typeof document !== 'undefined') {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = cleanedText;
+    return textarea.value;
+  }
+  // SSR fallback：手动解码常见实体
+  return cleanedText
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ');
 }

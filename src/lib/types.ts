@@ -11,7 +11,7 @@ export interface PlayRecord {
   play_time: number; // 播放进度（秒）
   total_time: number; // 总进度（秒）
   save_time: number; // 记录保存时间（时间戳）
-  search_title: string; // 搜索时使用的标题
+  search_title?: string; // 搜索时使用的标题（旧记录可能没有）
 }
 
 // 收藏数据结构
@@ -22,7 +22,7 @@ export interface Favorite {
   year: string;
   cover: string;
   save_time: number; // 记录保存时间（时间戳）
-  search_title: string; // 搜索时使用的标题
+  search_title?: string; // 搜索时使用的标题
   origin?: 'vod' | 'live';
 }
 
@@ -33,7 +33,7 @@ export interface IStorage {
   setPlayRecord(
     userName: string,
     key: string,
-    record: PlayRecord
+    record: PlayRecord,
   ): Promise<void>;
   getAllPlayRecords(userName: string): Promise<{ [key: string]: PlayRecord }>;
   deletePlayRecord(userName: string, key: string): Promise<void>;
@@ -70,13 +70,13 @@ export interface IStorage {
   getSkipConfig(
     userName: string,
     source: string,
-    id: string
+    id: string,
   ): Promise<SkipConfig | null>;
   setSkipConfig(
     userName: string,
     source: string,
     id: string,
-    config: SkipConfig
+    config: SkipConfig,
   ): Promise<void>;
   deleteSkipConfig(userName: string, source: string, id: string): Promise<void>;
   getAllSkipConfigs(userName: string): Promise<{ [key: string]: SkipConfig }>;

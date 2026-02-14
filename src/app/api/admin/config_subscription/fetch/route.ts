@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
+import { decodeSubscriptionConfig } from '@/lib/config-subscription';
 
 export const runtime = 'nodejs';
 
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       return NextResponse.json(
         { error: '权限不足，只有站长可以拉取配置订阅' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -33,34 +34,36 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       return NextResponse.json(
         { error: `请求失败: ${response.status} ${response.statusText}` },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
     const configContent = await response.text();
 
-    // 对 configContent 进行 base58 解码
-    let decodedContent;
+    let decodedResult;
     try {
-      const bs58 = (await import('bs58')).default;
-      const decodedBytes = bs58.decode(configContent);
-      decodedContent = new TextDecoder().decode(decodedBytes);
+      decodedResult = await decodeSubscriptionConfig(configContent);
     } catch (decodeError) {
-      console.warn('Base58 解码失败', decodeError);
-      throw decodeError;
+      console.warn('配置订阅解析失败', decodeError);
+      return NextResponse.json(
+        {
+          error:
+            decodeError instanceof Error
+              ? decodeError.message
+              : '配置内容解析失败',
+        },
+        { status: 400 },
+      );
     }
 
     return NextResponse.json({
       success: true,
-      configContent: decodedContent,
-      message: '配置拉取成功'
+      configContent: decodedResult.content,
+      contentFormat: decodedResult.format,
+      message: '配置拉取成功',
     });
-
   } catch (error) {
     console.error('拉取配置失败:', error);
-    return NextResponse.json(
-      { error: '拉取配置失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '拉取配置失败' }, { status: 500 });
   }
 }

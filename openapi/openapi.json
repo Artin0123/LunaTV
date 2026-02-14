@@ -1,0 +1,459 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "LunaTV API",
+    "version": "100.1.0",
+    "description": "LunaTV 核心 API 文档（持续补充中）"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "认证相关接口"
+    },
+    {
+      "name": "User Data",
+      "description": "用户数据相关接口"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": ["error"]
+      },
+      "ApiOk": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": ["ok"]
+      },
+      "ApiSuccess": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          }
+        },
+        "required": ["success"]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/api/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "用户登录",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": ["password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数验证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "认证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/change-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "修改当前用户密码",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": ["newPassword"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "修改成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数验证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/favorites": {
+      "post": {
+        "tags": ["User Data"],
+        "summary": "保存收藏",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^.+\\+.+$"
+                  },
+                  "favorite": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "source_name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "year": {
+                        "type": "string",
+                        "default": ""
+                      },
+                      "cover": {
+                        "type": "string",
+                        "default": ""
+                      },
+                      "total_episodes": {
+                        "type": "integer",
+                        "default": 0
+                      },
+                      "save_time": {
+                        "type": "number",
+                        "default": 1771051281880
+                      },
+                      "search_title": {
+                        "type": "string"
+                      },
+                      "origin": {
+                        "type": "string",
+                        "enum": ["vod", "live"]
+                      }
+                    },
+                    "required": ["title", "source_name"]
+                  }
+                },
+                "required": ["key", "favorite"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "保存成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数验证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/playrecords": {
+      "post": {
+        "tags": ["User Data"],
+        "summary": "保存播放记录",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^.+\\+.+$"
+                  },
+                  "record": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "source_name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "year": {
+                        "type": "string",
+                        "default": ""
+                      },
+                      "cover": {
+                        "type": "string",
+                        "default": ""
+                      },
+                      "index": {
+                        "type": "integer",
+                        "default": 0
+                      },
+                      "total_episodes": {
+                        "type": "integer",
+                        "default": 0
+                      },
+                      "play_time": {
+                        "type": "number",
+                        "default": 0
+                      },
+                      "total_time": {
+                        "type": "number",
+                        "default": 0
+                      },
+                      "save_time": {
+                        "type": "number",
+                        "default": 1771051281881
+                      },
+                      "search_title": {
+                        "type": "string"
+                      }
+                    },
+                    "required": ["title", "source_name"]
+                  }
+                },
+                "required": ["key", "record"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "保存成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数验证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/searchhistory": {
+      "post": {
+        "tags": ["User Data"],
+        "summary": "新增搜索历史",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "keyword": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                },
+                "required": ["keyword"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "返回更新后的历史列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数验证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/skipconfigs": {
+      "post": {
+        "tags": ["User Data"],
+        "summary": "保存跳过片头片尾配置",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^.+\\+.+$"
+                  },
+                  "config": {
+                    "type": "object",
+                    "properties": {
+                      "enable": {
+                        "type": "boolean",
+                        "default": true
+                      },
+                      "intro_time": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 0
+                      },
+                      "outro_time": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 0
+                      }
+                    }
+                  }
+                },
+                "required": ["key", "config"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "保存成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数验证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,24 +1,39 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
+import { loginSchema, validateBody } from '@/lib/api-schemas';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
 export const runtime = 'nodejs';
 
-// 读取存储类型环境变量，默认 localstorage
+// 读取存储类型环境变量
 const STORAGE_TYPE =
   (process.env.NEXT_PUBLIC_STORAGE_TYPE as
     | 'localstorage'
-    | 'redis'
     | 'upstash'
-    | 'kvrocks'
+    | 'memory'
     | undefined) || 'localstorage';
+
+// Cookie 安全配置
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const AUTH_COOKIE_OPTIONS = {
+  path: '/',
+  sameSite: 'lax' as const,
+  httpOnly: true, // 认证信息仅服务端可读，降低 XSS 窃取风险
+  secure: IS_PRODUCTION, // 生产环境强制 HTTPS
+};
+const CLIENT_COOKIE_OPTIONS = {
+  path: '/',
+  sameSite: 'lax' as const,
+  httpOnly: false,
+  secure: IS_PRODUCTION,
+};
 
 // 生成签名
 async function generateSignature(
   data: string,
-  secret: string
+  secret: string,
 ): Promise<string> {
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secret);
@@ -30,7 +45,7 @@ async function generateSignature(
     keyData,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
-    ['sign']
+    ['sign'],
   );
 
   // 生成签名
@@ -42,29 +57,45 @@ async function generateSignature(
     .join('');
 }
 
-// 生成认证Cookie（带签名）
+// 生成认证Cookie（带签名 + 时间戳）
 async function generateAuthCookie(
   username?: string,
   password?: string,
   role?: 'owner' | 'admin' | 'user',
-  includePassword = false
+  includePassword = false,
 ): Promise<string> {
   const authData: any = { role: role || 'user' };
 
-  // 只在需要时包含 password
+  // 只在 localstorage 模式时包含 password
   if (includePassword && password) {
     authData.password = password;
   }
 
   if (username && process.env.PASSWORD) {
     authData.username = username;
-    // 使用密码作为密钥对用户名进行签名
-    const signature = await generateSignature(username, process.env.PASSWORD);
+    const timestamp = Date.now();
+    authData.timestamp = timestamp;
+    // 签名包含时间戳，防止重放攻击
+    const signature = await generateSignature(
+      `${username}:${timestamp}`,
+      process.env.PASSWORD || '',
+    );
     authData.signature = signature;
-    authData.timestamp = Date.now(); // 添加时间戳防重放攻击
   }
 
   return encodeURIComponent(JSON.stringify(authData));
+}
+
+function generateClientAuthCookie(
+  username?: string,
+  role: 'owner' | 'admin' | 'user' = 'user',
+): string {
+  return encodeURIComponent(
+    JSON.stringify({
+      username,
+      role,
+    }),
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -77,27 +108,30 @@ export async function POST(req: NextRequest) {
       if (!envPassword) {
         const response = NextResponse.json({ ok: true });
 
-        // 清除可能存在的认证cookie
+        // 清除可能存在的认证 cookie
         response.cookies.set('auth', '', {
-          path: '/',
+          ...AUTH_COOKIE_OPTIONS,
           expires: new Date(0),
-          sameSite: 'lax', // 改为 lax 以支持 PWA
-          httpOnly: false, // PWA 需要客户端可访问
-          secure: false, // 根据协议自动设置
+        });
+        response.cookies.set('auth_client', '', {
+          ...CLIENT_COOKIE_OPTIONS,
+          expires: new Date(0),
         });
 
         return response;
       }
 
-      const { password } = await req.json();
-      if (typeof password !== 'string') {
-        return NextResponse.json({ error: '密码不能为空' }, { status: 400 });
+      const body = await req.json();
+      const parsed = validateBody(loginSchema, body);
+      if (!parsed.success) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
       }
+      const { password } = parsed.data;
 
       if (password !== envPassword) {
         return NextResponse.json(
           { ok: false, error: '密码错误' },
-          { status: 401 }
+          { status: 401 },
         );
       }
 
@@ -107,30 +141,37 @@ export async function POST(req: NextRequest) {
         undefined,
         password,
         'user',
-        true
+        true,
       ); // localstorage 模式包含 password
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
 
       response.cookies.set('auth', cookieValue, {
-        path: '/',
+        ...AUTH_COOKIE_OPTIONS,
         expires,
-        sameSite: 'lax', // 改为 lax 以支持 PWA
-        httpOnly: false, // PWA 需要客户端可访问
-        secure: false, // 根据协议自动设置
       });
+      response.cookies.set(
+        'auth_client',
+        generateClientAuthCookie(undefined, 'user'),
+        {
+          ...CLIENT_COOKIE_OPTIONS,
+          expires,
+        },
+      );
 
       return response;
     }
 
     // 数据库 / redis 模式——校验用户名并尝试连接数据库
-    const { username, password } = await req.json();
-
-    if (!username || typeof username !== 'string') {
-      return NextResponse.json({ error: '用户名不能为空' }, { status: 400 });
+    const body = await req.json();
+    const parsed = validateBody(loginSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
-    if (!password || typeof password !== 'string') {
-      return NextResponse.json({ error: '密码不能为空' }, { status: 400 });
+    const { username, password } = parsed.data;
+
+    if (!username) {
+      return NextResponse.json({ error: '用户名不能为空' }, { status: 400 });
     }
 
     // 可能是站长，直接读环境变量
@@ -144,18 +185,23 @@ export async function POST(req: NextRequest) {
         username,
         password,
         'owner',
-        false
+        false,
       ); // 数据库模式不包含 password
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
 
       response.cookies.set('auth', cookieValue, {
-        path: '/',
+        ...AUTH_COOKIE_OPTIONS,
         expires,
-        sameSite: 'lax', // 改为 lax 以支持 PWA
-        httpOnly: false, // PWA 需要客户端可访问
-        secure: false, // 根据协议自动设置
       });
+      response.cookies.set(
+        'auth_client',
+        generateClientAuthCookie(username, 'owner'),
+        {
+          ...CLIENT_COOKIE_OPTIONS,
+          expires,
+        },
+      );
 
       return response;
     } else if (username === process.env.USERNAME) {
@@ -174,7 +220,7 @@ export async function POST(req: NextRequest) {
       if (!pass) {
         return NextResponse.json(
           { error: '用户名或密码错误' },
-          { status: 401 }
+          { status: 401 },
         );
       }
 
@@ -184,18 +230,23 @@ export async function POST(req: NextRequest) {
         username,
         password,
         user?.role || 'user',
-        false
+        false,
       ); // 数据库模式不包含 password
       const expires = new Date();
       expires.setDate(expires.getDate() + 7); // 7天过期
 
       response.cookies.set('auth', cookieValue, {
-        path: '/',
+        ...AUTH_COOKIE_OPTIONS,
         expires,
-        sameSite: 'lax', // 改为 lax 以支持 PWA
-        httpOnly: false, // PWA 需要客户端可访问
-        secure: false, // 根据协议自动设置
       });
+      response.cookies.set(
+        'auth_client',
+        generateClientAuthCookie(username, user?.role || 'user'),
+        {
+          ...CLIENT_COOKIE_OPTIONS,
+          expires,
+        },
+      );
 
       return response;
     } catch (err) {

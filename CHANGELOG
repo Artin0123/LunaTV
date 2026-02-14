@@ -1,3 +1,97 @@
+## [100.1.0] - 2026-02-14
+
+### Added
+
+- 新增密码哈希存储（bcryptjs），支持旧版明文密码自动迁移
+- 新增 Cron API 认证（`CRON_SECRET` 环境变量）
+- 新增 HMAC 签名时间戳过期机制（7 天有效期）
+- 新增系统监控 API `/api/admin/monitor`（内存使用、Redis 延迟、实例信息）
+- 新增健康检查 API `/api/admin/monitor/health`（Upstash + 采集源连通性）
+- 新增 `.env.example` 环境变量参考文件
+- 新增单元测试（data-utils、version_check、utils，共 28 个 test case）
+- 新增管理后台「系统监控」标签页（内存概览、Redis 延迟、SVG 趋势图、健康检查）
+- 新增 OpenAPI 文档路由：`/api/docs`（Swagger UI）与 `/api/docs/openapi`（JSON）
+- 新增 OpenAPI 自动化生成流程：可一键输出 OpenAPI JSON 与 TypeScript 类型声明
+
+### Changed
+
+- 迁移到 Serverless 部署架构（移除 Docker、Redis TCP、Kvrocks）
+- `tsconfig.json` target 改为 ES2020，排除测试文件的类型检查
+- Cookie 安全设置：`auth` 改为 HttpOnly + Secure + SameSite，客户端展示信息拆分到 `auth_client`
+- 启用 Vercel 图片优化（移除 `images.unoptimized: true`）
+- 统一 `PlayRecord`/`Favorite` 类型定义（`db.client.ts` 改为从 `types.ts` 导入）
+- 提取 `ensureString`/`ensureStringArray` 到 `data-utils.ts` 共享模块（使用 `unknown` 替代 `any`）
+- 消除 `db.ts` 中所有 `as any` 类型断言，直接使用 `IStorage` 接口
+- 替换 `he` 库为浏览器原生 HTML 实体解码（减少 bundle 体积）
+- 清理 `version.ts`、`data-utils.ts` 中不必要的 `eslint-disable` 注释
+- 新增 `api-schemas.ts` Zod 验证 Schema，并应用到 login、change-password、favorites API
+- 扩展 Zod 输入验证到 playrecords、searchhistory、skipconfigs API
+- 默认站点命名文案统一为 `LunaTV`（README、环境示例、运行时默认值、manifest 生成）
+- 抽取 `vod_play_url` 解析逻辑为共享函数，减少搜索/详情重复代码
+- 抽取直播源查询助手，复用在 proxy 与 precheck 路由中
+- 精简系统监控面板说明文案，移除平台绑定描述，仅保留核心指标信息
+- 系统监控与健康检查接口补充 owner/admin 鉴权与状态码校验逻辑
+- Upstash 用户管理新增索引集合（`u:index`），`getAllUsers` 优先使用 `SMEMBERS`
+- 完善 OpenAPI 初始化流程（补齐 `extendZodWithOpenApi`），确保文档路由可正常生成
+- 统一全站与 Swagger 文档页面的中文字体 fallback，避免中文退回衬线字体
+- memory 模式存储实例改为 `globalThis` 单例，降低开发态热更新导致的配置丢失概率
+
+### Performance
+
+- `getAllPlayRecords` / `getAllFavorites` 使用 MGET 批量查询，替代 N+1 查询
+- `addSearchHistory` 使用 Redis Pipeline，3 次操作合并为 1 次网络往返
+- `deleteUser` 改为单次用户命名空间匹配删除，减少重复 KEYS 扫描
+
+### Dependencies
+
+- TypeScript 4.9.5 → 5.9.3
+- Prettier 2.8.8 → 3.8.1
+- Jest 27.5.1 → 30.2.0
+- Husky 7.0.4 → 9.1.7（迁移到 v9 hook 格式）
+- Commitlint 16.x → 20.4.1
+- lint-staged 12.5.0 → 16.2.7
+- @typescript-eslint/* 5.62.0 → 7.18.0
+- @testing-library/jest-dom 5.17.0 → 6.9.1
+- @testing-library/react 15.0.7 → 16.3.2
+- @types/node 24.0.3 → 25.2.3
+- prettier-plugin-tailwindcss 0.5.14 → 0.7.2
+- eslint-config-prettier 8.10.0 → 10.1.8
+- eslint-plugin-simple-import-sort 7.0.0 → 12.1.1
+- eslint-plugin-unused-imports 2.0.0 → 3.2.0
+- next-router-mock 0.9.13 → 1.0.5
+- artplayer 5.2.5 → 5.3.0
+- hls.js 1.6.10 → 1.6.15
+- framer-motion 12.18.1 → 12.34.0
+- @upstash/redis 1.35.1 → 1.36.2
+- @headlessui/react 2.2.4 → 2.2.9
+- @tailwindcss/forms 0.5.10 → 0.5.11
+- autoprefixer 10.4.21 → 10.4.24
+
+### Removed
+
+- 移除 Dockerfile、.dockerignore、start.js、docker-image.yml
+- 移除 Redis TCP / Kvrocks 存储驱动
+- 移除 webpack-obfuscator
+- 移除 @types/bs58、@types/testing-library__jest-dom
+- 移除 @vidstack/react、vidstack、media-icons（源码中无引用）
+- 移除 he、@types/he（改用浏览器原生 API）
+
+### Fixed
+
+- 修复 `version_check.ts` 数组越界错误
+- 修复 `tsconfig.json` 非法 `moduleResolution` 数组
+- 移除 login route 中已废弃的 `redis` / `kvrocks` 存储类型引用
+- 修复 `/api/cron` 未等待任务执行完成即返回成功的问题
+- 优化 TS 分片代理：移除手动逐块泵流逻辑，改为直接透传上游流以降低 CPU 开销
+- 优化直播预检：优先使用 HEAD（不支持时回退 GET），减少不必要的响应体处理
+- 修复 memory 模式下本地缓存残留导致重启后仍显示旧数据的问题
+- 修复 memory 模式签名校验在不同运行时不一致导致登录后回到登录页的问题
+- 修复数据迁移导入路由使用 `(db as any).storage` 绕过类型约束的问题
+- 修复配置订阅仅支持 Base58 导致明文 JSON 订阅地址返回 500 的问题（改为同时支持 JSON/Base58）
+- 修复流式搜索在无可用资源站时未发送完成事件，导致前端持续转圈的问题
+- 修复管理后台表格中 DnD 容器嵌套在 `<table>` 内导致的 hydration 警告问题
+- 修复 Next/Image 过时 `onLoadingComplete` 与 `fill` 缺失 `sizes` 警告问题
+
 ## [100.0.3] - 2025-10-27
 
 ### Fixed

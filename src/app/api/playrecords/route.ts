@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { savePlayRecordSchema, validateBody } from '@/lib/api-schemas';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const user = config.UserConfig.Users.find(
-        (u) => u.username === authInfo.username
+        (u) => u.username === authInfo.username,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
     console.error('获取播放记录失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const user = config.UserConfig.Users.find(
-        (u) => u.username === authInfo.username
+        (u) => u.username === authInfo.username,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -65,29 +66,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { key, record }: { key: string; record: PlayRecord } = body;
-
-    if (!key || !record) {
-      return NextResponse.json(
-        { error: 'Missing key or record' },
-        { status: 400 }
-      );
+    const parsed = validateBody(savePlayRecordSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
-
-    // 验证播放记录数据
-    if (!record.title || !record.source_name || record.index < 1) {
-      return NextResponse.json(
-        { error: 'Invalid record data' },
-        { status: 400 }
-      );
-    }
+    const { key, record } = parsed.data;
 
     // 从key中解析source和id
     const [source, id] = key.split('+');
     if (!source || !id) {
       return NextResponse.json(
         { error: 'Invalid key format' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -103,7 +93,7 @@ export async function POST(request: NextRequest) {
     console.error('保存播放记录失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -120,7 +110,7 @@ export async function DELETE(request: NextRequest) {
     if (authInfo.username !== process.env.USERNAME) {
       // 非站长，检查用户存在或被封禁
       const user = config.UserConfig.Users.find(
-        (u) => u.username === authInfo.username
+        (u) => u.username === authInfo.username,
       );
       if (!user) {
         return NextResponse.json({ error: '用户不存在' }, { status: 401 });
@@ -140,7 +130,7 @@ export async function DELETE(request: NextRequest) {
       if (!source || !id) {
         return NextResponse.json(
           { error: 'Invalid key format' },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -153,7 +143,7 @@ export async function DELETE(request: NextRequest) {
         Object.keys(all).map(async (k) => {
           const [s, i] = k.split('+');
           if (s && i) await db.deletePlayRecord(username, s, i);
-        })
+        }),
       );
     }
 
@@ -162,7 +152,7 @@ export async function DELETE(request: NextRequest) {
     console.error('删除播放记录失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
