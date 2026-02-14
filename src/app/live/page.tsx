@@ -2,8 +2,6 @@
 
 'use client';
 
-import Artplayer from 'artplayer';
-import Hls from 'hls.js';
 import { Heart, Radio, Tv } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
@@ -247,6 +245,8 @@ function LivePageClient() {
   // 播放器引用
   const artPlayerRef = useRef<any>(null);
   const artRef = useRef<HTMLDivElement | null>(null);
+  const artplayerClassRef = useRef<any>(null);
+  const hlsClassRef = useRef<any>(null);
 
   // 分组标签滚动相关
   const groupContainerRef = useRef<HTMLDivElement>(null);
@@ -256,6 +256,21 @@ function LivePageClient() {
   // -----------------------------------------------------------------------------
   // 工具函数（Utils）
   // -----------------------------------------------------------------------------
+
+  const loadPlayerDeps = async () => {
+    if (!artplayerClassRef.current) {
+      const mod = await import('artplayer');
+      artplayerClassRef.current = mod.default;
+    }
+    if (!hlsClassRef.current) {
+      const mod = await import('hls.js');
+      hlsClassRef.current = mod.default;
+    }
+    return {
+      ArtplayerClass: artplayerClassRef.current,
+      HlsClass: hlsClassRef.current,
+    };
+  };
 
   // 获取直播源列表
   const fetchLiveSources = async () => {
@@ -825,51 +840,57 @@ function LivePageClient() {
     }
   }, [selectedGroup, groupedChannels]);
 
-  class CustomHlsJsLoader extends Hls.DefaultConfig.loader {
-    constructor(config: any) {
-      super(config);
-      const load = this.load.bind(this);
-      this.load = function (context: any, config: any, callbacks: any) {
-        // 所有的请求都带一个 source 参数
-        try {
-          const url = new URL(context.url);
-          url.searchParams.set(
-            'moontv-source',
-            currentSourceRef.current?.key || '',
-          );
-          context.url = url.toString();
-        } catch (error) {
-          // ignore
-        }
-        // 拦截manifest和level请求
-        if (
-          (context as any).type === 'manifest' ||
-          (context as any).type === 'level'
-        ) {
-          // 判断是否浏览器直连
-          const isLiveDirectConnectStr =
-            localStorage.getItem('liveDirectConnect');
-          const isLiveDirectConnect = isLiveDirectConnectStr === 'true';
-          if (isLiveDirectConnect) {
-            // 浏览器直连，使用 URL 对象处理参数
-            try {
-              const url = new URL(context.url);
-              url.searchParams.set('allowCORS', 'true');
-              context.url = url.toString();
-            } catch (error) {
-              // 如果 URL 解析失败，回退到字符串拼接
-              context.url = context.url + '&allowCORS=true';
+  const createCustomHlsJsLoader = (HlsClass: any) =>
+    class extends HlsClass.DefaultConfig.loader {
+      constructor(config: any) {
+        super(config);
+        const load = this.load.bind(this);
+        this.load = function (context: any, config: any, callbacks: any) {
+          // 所有的请求都带一个 source 参数
+          try {
+            const url = new URL(context.url);
+            url.searchParams.set(
+              'moontv-source',
+              currentSourceRef.current?.key || '',
+            );
+            context.url = url.toString();
+          } catch (error) {
+            // ignore
+          }
+          // 拦截manifest和level请求
+          if (
+            (context as any).type === 'manifest' ||
+            (context as any).type === 'level'
+          ) {
+            // 判断是否浏览器直连
+            const isLiveDirectConnectStr =
+              localStorage.getItem('liveDirectConnect');
+            const isLiveDirectConnect = isLiveDirectConnectStr === 'true';
+            if (isLiveDirectConnect) {
+              // 浏览器直连，使用 URL 对象处理参数
+              try {
+                const url = new URL(context.url);
+                url.searchParams.set('allowCORS', 'true');
+                context.url = url.toString();
+              } catch (error) {
+                // 如果 URL 解析失败，回退到字符串拼接
+                context.url = context.url + '&allowCORS=true';
+              }
             }
           }
-        }
-        // 执行原始load方法
-        load(context, config, callbacks);
-      };
-    }
-  }
+          // 执行原始load方法
+          load(context, config, callbacks);
+        };
+      }
+    };
 
-  function m3u8Loader(video: HTMLVideoElement, url: string) {
-    if (!Hls) {
+  function m3u8Loader(
+    video: HTMLVideoElement,
+    url: string,
+    HlsClass: any,
+    CustomHlsJsLoader: any,
+  ) {
+    if (!HlsClass) {
       console.error('HLS.js 未加载');
       return;
     }
@@ -884,7 +905,7 @@ function LivePageClient() {
       }
     }
 
-    const hls = new Hls({
+    const hls = new HlsClass({
       debug: false,
       enableWorker: true,
       lowLatencyMode: true,
@@ -898,15 +919,15 @@ function LivePageClient() {
     hls.attachMedia(video);
     video.hls = hls;
 
-    hls.on(Hls.Events.ERROR, function (event: any, data: any) {
+    hls.on(HlsClass.Events.ERROR, function (event: any, data: any) {
       console.error('HLS Error:', event, data);
 
       if (data.fatal) {
         switch (data.type) {
-          case Hls.ErrorTypes.NETWORK_ERROR:
+          case HlsClass.ErrorTypes.NETWORK_ERROR:
             hls.startLoad();
             break;
-          case Hls.ErrorTypes.MEDIA_ERROR:
+          case HlsClass.ErrorTypes.MEDIA_ERROR:
             // hls.recoverMediaError();
             break;
           default:
@@ -919,16 +940,18 @@ function LivePageClient() {
 
   // 播放器初始化
   useEffect(() => {
+    let cancelled = false;
+
     const preload = async () => {
-      if (
-        !Artplayer ||
-        !Hls ||
-        !videoUrl ||
-        !artRef.current ||
-        !currentChannel
-      ) {
+      if (!videoUrl || !artRef.current || !currentChannel || loading) {
         return;
       }
+
+      const { ArtplayerClass, HlsClass } = await loadPlayerDeps();
+      if (cancelled || !ArtplayerClass || !HlsClass) {
+        return;
+      }
+      const CustomHlsJsLoader = createCustomHlsJsLoader(HlsClass);
 
       console.log('视频URL:', videoUrl);
 
@@ -960,14 +983,17 @@ function LivePageClient() {
       // 重置不支持的类型
       setUnsupportedType(null);
 
-      const customType = { m3u8: m3u8Loader };
+      const customType = {
+        m3u8: (video: HTMLVideoElement, url: string) =>
+          m3u8Loader(video, url, HlsClass, CustomHlsJsLoader),
+      };
       const targetUrl = `/api/proxy/m3u8?url=${encodeURIComponent(videoUrl)}&moontv-source=${currentSourceRef.current?.key || ''}`;
       try {
         // 创建新的播放器实例
-        Artplayer.USE_RAF = false;
-        Artplayer.FULLSCREEN_WEB_IN_BODY = true;
+        ArtplayerClass.USE_RAF = false;
+        ArtplayerClass.FULLSCREEN_WEB_IN_BODY = true;
 
-        artPlayerRef.current = new Artplayer({
+        artPlayerRef.current = new ArtplayerClass({
           container: artRef.current,
           url: targetUrl,
           poster: currentChannel.logo,
@@ -1012,7 +1038,7 @@ function LivePageClient() {
             {
               position: 'right',
               index: 2,
-              html: '<i class="art-icon flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 8a2 2 0 0 1 2-2h2.6l1.2-1.4A2 2 0 0 1 11.3 4h1.4a2 2 0 0 1 1.5.6L15.4 6H18a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg></i>',
+              html: '<i class="art-icon flex"><svg width="22" height="22" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="7" width="17" height="12.5" rx="2.5" style="fill:none;stroke:currentColor;stroke-width:1.6"/><path d="M9 7L10.2 4.8h3.6L15 7" style="fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round"/><circle cx="12" cy="13.2" r="3.2" style="fill:none;stroke:currentColor;stroke-width:1.6"/><circle cx="17.2" cy="10.2" r="0.8" style="fill:currentColor;stroke:none"/></svg></i>',
               tooltip: '截图保存',
               click: function () {
                 try {
@@ -1070,8 +1096,11 @@ function LivePageClient() {
         // 不设置错误，只记录日志
       }
     };
-    preload();
-  }, [Artplayer, Hls, videoUrl, currentChannel, loading]);
+    void preload();
+    return () => {
+      cancelled = true;
+    };
+  }, [videoUrl, currentChannel, loading]);
 
   // 清理播放器资源
   useEffect(() => {

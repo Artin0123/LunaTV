@@ -10,6 +10,21 @@ import { PlayRecord } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
+async function parseJsonBodySafely(
+  request: NextRequest,
+): Promise<{ ok: true; data: unknown } | { ok: false; error: string }> {
+  const raw = await request.text();
+  if (!raw || !raw.trim()) {
+    return { ok: false, error: '请求体不能为空' };
+  }
+
+  try {
+    return { ok: true, data: JSON.parse(raw) };
+  } catch {
+    return { ok: false, error: '请求体必须为合法 JSON' };
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     // 从 cookie 获取用户信息
@@ -65,8 +80,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const body = await request.json();
-    const parsed = validateBody(savePlayRecordSchema, body);
+    const parsedBody = await parseJsonBodySafely(request);
+    if (!parsedBody.ok) {
+      return NextResponse.json({ error: parsedBody.error }, { status: 400 });
+    }
+
+    const parsed = validateBody(savePlayRecordSchema, parsedBody.data);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });
     }

@@ -669,7 +669,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             {config.showPlayButton && (
               <div
                 data-button='true'
-                className='absolute inset-0 z-20 flex items-center justify-center opacity-0 transition-all duration-300 ease-in-out delay-75 group-hover:opacity-100 group-hover:scale-100'
+                className='pointer-events-none absolute inset-0 z-20 flex items-center justify-center opacity-0 transition-all duration-300 ease-in-out delay-75 group-hover:opacity-100 group-hover:scale-100'
                 style={
                   {
                     WebkitUserSelect: 'none',
@@ -682,7 +682,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   return false;
                 }}
               >
-                <div className='group/play relative flex h-[50px] w-[50px] items-center justify-center rounded-full transition-transform duration-300 ease-out hover:scale-[1.1]'>
+                <div className='group/play pointer-events-auto relative flex h-[50px] w-[50px] items-center justify-center rounded-full transition-transform duration-300 ease-out hover:scale-[1.1]'>
                   <span className='pointer-events-none absolute inset-[5px] rounded-full bg-green-500 opacity-0 transition-opacity duration-200 ease-out group-hover/play:opacity-100'></span>
                   <PlayCircleIcon
                     size={50}
@@ -893,7 +893,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
                 return (
                   <div
-                    className='absolute bottom-2 right-2 opacity-0 transition-all duration-300 ease-in-out delay-75 sm:group-hover:opacity-100'
+                    className='absolute bottom-2 right-2 z-30 opacity-0 transition-all duration-300 ease-in-out delay-75 sm:group-hover:opacity-100'
                     style={
                       {
                         WebkitUserSelect: 'none',

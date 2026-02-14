@@ -244,18 +244,20 @@ Tailwind 4 是完全的架构重设计：
 - Upstash `deleteUser`：3 次 KEYS 扫描合并为单次用户命名空间匹配删除
 - Upstash `getAllUsers`：新增用户索引集合，优先走 `SMEMBERS`，仅旧数据回退 `KEYS`
 - 数据迁移导入/导出 API：移除 `(db as any).storage`，改用 `DbManager` 公开方法
+- `RUNTIME_CONFIG`：已完成类型化与集中访问层改造，替代 `(window as any)` 分散读取
+- `/play` 与 `/live`：播放器依赖改为运行时动态加载，降低开发态 HMR 时 chunk 初始化崩溃概率
+- `/api/playrecords`：POST 新增请求体安全解析，空 body / 非 JSON 改为 400，不再抛出 JSON 解析堆栈
 
 ### ⏳ 待处理（后续）
 
-| 优先级 | 项目                              | 说明                                 |
-| ------ | --------------------------------- | ------------------------------------ |
-| 高     | 拆分 `src/app/admin/page.tsx`     | 当前 5476 行，维护成本高             |
-| 高     | 拆分 `src/lib/db.client.ts`       | 当前 1643 行，职责过重               |
-| 中     | `RUNTIME_CONFIG` 类型化与集中访问 | 减少 `(window as any)` 分散写法      |
-| 中     | 缩小大范围 eslint-disable         | 从整档禁用改为按行精准禁用           |
-| 低     | 优化 `JSON.stringify` 深比较      | 降低大对象比较开销并提升可读性       |
-| 低     | 合并 `handleDragEnd` 重复逻辑     | `admin/page.tsx` 有 3 处近似实现     |
-| 低     | 抽象 `CustomHlsJsLoader` 共用层   | `play/live` 两处结构相似，可评估共用 |
+| 优先级 | 项目                            | 说明                                 |
+| ------ | ------------------------------- | ------------------------------------ |
+| 高     | 拆分 `src/app/admin/page.tsx`   | 当前 5476 行，维护成本高             |
+| 高     | 拆分 `src/lib/db.client.ts`     | 当前 1643 行，职责过重               |
+| 中     | 缩小大范围 eslint-disable       | 从整档禁用改为按行精准禁用           |
+| 低     | 优化 `JSON.stringify` 深比较    | 降低大对象比较开销并提升可读性       |
+| 低     | 合并 `handleDragEnd` 重复逻辑   | `admin/page.tsx` 有 3 处近似实现     |
+| 低     | 抽象 `CustomHlsJsLoader` 共用层 | `play/live` 两处结构相似，可评估共用 |
 
 ---
 

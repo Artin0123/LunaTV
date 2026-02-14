@@ -705,7 +705,13 @@ function SearchPageClient() {
         <div className='mb-8'>
           <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
             <div className='relative'>
-              <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
+              <button
+                type='submit'
+                className='absolute left-0 top-0 flex h-full w-10 items-center justify-center text-gray-400 transition-colors hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'
+                aria-label='执行搜索'
+              >
+                <Search className='h-5 w-5' />
+              </button>
               <input
                 id='searchInput'
                 type='text'
@@ -907,8 +913,15 @@ function SearchPageClient() {
                 搜索历史
                 {searchHistory.length > 0 && (
                   <button
-                    onClick={() => {
-                      clearSearchHistory(); // 事件监听会自动更新界面
+                    onClick={async () => {
+                      if (
+                        !window.confirm(
+                          '确定要清空搜索历史吗？此操作不可恢复。',
+                        )
+                      ) {
+                        return;
+                      }
+                      await clearSearchHistory(); // 事件监听会自动更新界面
                     }}
                     className='ml-3 text-sm text-gray-500 hover:text-red-500 transition-colors dark:text-gray-400 dark:hover:text-red-500'
                   >

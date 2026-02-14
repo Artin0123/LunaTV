@@ -58,6 +58,7 @@
 
 - HLS.js 集成播放 m3u8 流
 - ArtPlayer 视频播放器 + HLS.js
+- `/play` 与 `/live` 的播放器依赖改为运行时动态加载（降低开发态 HMR chunk 初始化异常）
 - 视频清晰度检测 + 网络速度测量
 - 剧集列表 & 选集功能 + 跳过片头片尾
 
@@ -138,11 +139,11 @@
 
 ### DX
 
-| #   | 问题                  | 说明                                                             |
-| --- | --------------------- | ---------------------------------------------------------------- |
-| 1   | Zod 部分使用          | 已应用到 login/change-password/favorites，仍需逐步扩展到更多路由 |
-| 2   | 测试覆盖率较低        | 有 28 个基础测试，但缺少 API 路由和组件测试                      |
-| 3   | `next-pwa` 已停止维护 | 待迁移到 `@serwist/next` 或 `@ducanh2912/next-pwa`               |
+| #   | 问题                  | 说明                                                                                                   |
+| --- | --------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1   | Zod 部分使用          | 已应用到 login/change-password/favorites/playrecords/searchhistory/skipconfigs，仍需逐步扩展到更多路由 |
+| 2   | 测试覆盖率较低        | 有 28 个基础测试，但缺少 API 路由和组件测试                                                            |
+| 3   | `next-pwa` 已停止维护 | 待迁移到 `@serwist/next` 或 `@ducanh2912/next-pwa`                                                     |
 
 ### 2026-02-14 复查补充（Medium）
 
@@ -155,11 +156,12 @@
 | 5   |   中   | `vod_play_url` 解析逻辑重复                                 | ✅ 已抽取 `parseVodPlayUrl`           |
 | 6   |   中   | proxy / precheck 多处重复 LiveSource 查找                   | ✅ 已抽取 `getLiveSourceByKey`        |
 | 7   |   中   | `src/app/admin/page.tsx` 顶层大范围 eslint-disable          | 待处理                                |
-| 8   |   中   | `UserMenu` 与多处 `(window as any).RUNTIME_CONFIG` 分散存取 | 待处理                                |
+| 8   |   中   | `UserMenu` 与多处 `(window as any).RUNTIME_CONFIG` 分散存取 | ✅ 已完成统一访问层替换               |
 | 9   |   中   | `data_migration/import/export` 使用 `(db as any).storage`   | ✅ 已改为 `DbManager` 公开方法        |
 | 10  |   低   | `db.client.ts` 多处 `JSON.stringify` 深比较                 | 待处理                                |
 | 11  |   低   | `admin/page.tsx` 中 3 处重复 `handleDragEnd`                | 待处理                                |
 | 12  |   低   | `play` / `live` 的 `CustomHlsJsLoader` 结构相近             | 待处理                                |
+| 13  |   低   | `POST /api/playrecords` 空请求体触发 JSON 解析异常          | ✅ 已加请求体安全解析（400）          |
 
 ---
 
