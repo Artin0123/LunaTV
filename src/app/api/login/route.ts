@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
       return response;
     }
 
-    // 数据库 / redis 模式——校验用户名并尝试连接数据库
+    // 数据库模式（upstash / memory）——校验用户名并尝试连接数据库
     const body = await req.json();
     const parsed = validateBody(loginSchema, body);
     if (!parsed.success) {

@@ -114,6 +114,17 @@ export class InMemoryStorage implements IStorage {
     this.users.set(userName, hashed);
   }
 
+  async getUserPasswordHash(userName: string): Promise<string | null> {
+    return this.users.get(userName) ?? null;
+  }
+
+  async setUserPasswordHash(
+    userName: string,
+    passwordHash: string,
+  ): Promise<void> {
+    this.users.set(userName, passwordHash);
+  }
+
   async deleteUser(userName: string): Promise<void> {
     this.users.delete(userName);
     this.playRecords.delete(userName);

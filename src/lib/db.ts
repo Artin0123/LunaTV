@@ -178,6 +178,19 @@ export class DbManager {
     await this.storage.changePassword(userName, newPassword);
   }
 
+  async getUserPasswordHash(userName: string): Promise<string | null> {
+    if (!this.storage) return null;
+    return this.storage.getUserPasswordHash(userName);
+  }
+
+  async setUserPasswordHash(
+    userName: string,
+    passwordHash: string,
+  ): Promise<void> {
+    if (!this.storage) return;
+    await this.storage.setUserPasswordHash(userName, passwordHash);
+  }
+
   async deleteUser(userName: string): Promise<void> {
     if (!this.storage) return;
     await this.storage.deleteUser(userName);

@@ -57,7 +57,7 @@
 ### 2. 视频播放
 
 - HLS.js 集成播放 m3u8 流
-- ArtPlayer 视频播放器 + Vidstack 备选
+- ArtPlayer 视频播放器 + HLS.js
 - 视频清晰度检测 + 网络速度测量
 - 剧集列表 & 选集功能 + 跳过片头片尾
 
@@ -92,7 +92,7 @@
 
 ### 8. 系统监控
 
-- `/api/admin/monitor`：内存使用、Redis 延迟、实例存活时间
+- `/api/admin/monitor`：内存使用、数据库延迟（Upstash）、实例存活时间
 - `/api/admin/monitor/health`：Upstash + 采集源连通性健康检查
 - 前端监控面板已上线（系统概览 + 趋势图 + 健康检查，10 秒轮询）
 - 监控 API 已限制为 owner/admin 访问
@@ -120,17 +120,17 @@
 
 | #   | 问题                                            | 位置                                        |
 | --- | ----------------------------------------------- | ------------------------------------------- |
-| 1   | `db.client.ts` 1635 行巨型文件                  | 应拆分为独立模块                            |
+| 1   | `db.client.ts` 1643 行巨型文件                  | 应拆分为独立模块                            |
 | 2   | 大量 `eslint-disable` 注释                      | 50+ 文件，掩盖实际问题                      |
 | 3   | 认证资讯仍依赖客户端可读 cookie (`auth_client`) | 可再评估改为 `/api/me` 拉取角色，降低篡改面 |
 
 ### 性能
 
-| #   | 问题                        | 位置                               |
-| --- | --------------------------- | ---------------------------------- |
-| 1   | `KEYS` 命令在数据量大时阻塞 | `getAllUsers` 等仍使用 KEYS        |
-| 2   | `deleteUser` 多次 KEYS 扫描 | 可合并为单次模式匹配               |
-| 3   | `vod_play_url` 重复解析逻辑 | `downstream.ts` 搜索和详情各写一份 |
+| #   | 问题                                         | 位置                             |
+| --- | -------------------------------------------- | -------------------------------- |
+| 1   | `db.client.ts` 多处 `JSON.stringify` 深比较  | 大对象比较有性能与可读性成本     |
+| 2   | `admin/page.tsx` 中 3 处重复 `handleDragEnd` | 可抽取共用逻辑减少重复维护成本   |
+| 3   | `CustomHlsJsLoader` 结构相近                 | `play/live` 两处可评估提取共用层 |
 
 | #   | 问题                  | 说明                                  |
 | --- | --------------------- | ------------------------------------- |
@@ -148,15 +148,15 @@
 
 | #   | 严重度 | 问题                                                        | 状态                                  |
 | --- | :----: | ----------------------------------------------------------- | ------------------------------------- |
-| 1   |   高   | `src/app/admin/page.tsx` 体积过大（4823 行）                | 待处理                                |
-| 2   |   高   | `src/lib/db.client.ts` 体积过大（1650+ 行）                 | 待处理                                |
+| 1   |   高   | `src/app/admin/page.tsx` 体积过大（5476 行）                | 待处理                                |
+| 2   |   高   | `src/lib/db.client.ts` 体积过大（1643 行）                  | 待处理                                |
 | 3   |   高   | `upstash.db.ts` 的 `deleteUser` 多次 KEYS 扫描              | ✅ 已优化为单次命名空间匹配           |
 | 4   |   高   | `upstash.db.ts` 的 `getAllUsers` 使用 `KEYS('u:*:pwd')`     | ✅ 已改为用户索引集合优先（兼容回退） |
 | 5   |   中   | `vod_play_url` 解析逻辑重复                                 | ✅ 已抽取 `parseVodPlayUrl`           |
 | 6   |   中   | proxy / precheck 多处重复 LiveSource 查找                   | ✅ 已抽取 `getLiveSourceByKey`        |
 | 7   |   中   | `src/app/admin/page.tsx` 顶层大范围 eslint-disable          | 待处理                                |
 | 8   |   中   | `UserMenu` 与多处 `(window as any).RUNTIME_CONFIG` 分散存取 | 待处理                                |
-| 9   |   中   | `data_migration/import` 使用 `(db as any).storage`          | ✅ 已改为 `DbManager` 公开方法        |
+| 9   |   中   | `data_migration/import/export` 使用 `(db as any).storage`   | ✅ 已改为 `DbManager` 公开方法        |
 | 10  |   低   | `db.client.ts` 多处 `JSON.stringify` 深比较                 | 待处理                                |
 | 11  |   低   | `admin/page.tsx` 中 3 处重复 `handleDragEnd`                | 待处理                                |
 | 12  |   低   | `play` / `live` 的 `CustomHlsJsLoader` 结构相近             | 待处理                                |

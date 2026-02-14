@@ -51,6 +51,9 @@ export interface IStorage {
   checkUserExist(userName: string): Promise<boolean>;
   // 修改用户密码
   changePassword(userName: string, newPassword: string): Promise<void>;
+  // 读取/写入已哈希密码（用于迁移导入导出）
+  getUserPasswordHash(userName: string): Promise<string | null>;
+  setUserPasswordHash(userName: string, passwordHash: string): Promise<void>;
   // 删除用户（包括密码、搜索历史、播放记录、收藏夹）
   deleteUser(userName: string): Promise<void>;
 

@@ -220,6 +220,24 @@ export class UpstashRedisStorage implements IStorage {
     await withRetry(() => this.client.set(this.userPwdKey(userName), hash));
   }
 
+  async getUserPasswordHash(userName: string): Promise<string | null> {
+    const stored = await withRetry(() =>
+      this.client.get(this.userPwdKey(userName)),
+    );
+    if (stored === null) return null;
+    return ensureString(stored);
+  }
+
+  async setUserPasswordHash(
+    userName: string,
+    passwordHash: string,
+  ): Promise<void> {
+    await withRetry(() =>
+      this.client.set(this.userPwdKey(userName), passwordHash),
+    );
+    await withRetry(() => this.client.sadd(this.userIndexKey(), userName));
+  }
+
   // 删除用户及其所有数据
   async deleteUser(userName: string): Promise<void> {
     // 单次匹配用户命名空间，避免 3 次 KEYS 扫描

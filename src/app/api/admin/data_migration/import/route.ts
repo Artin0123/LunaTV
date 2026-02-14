@@ -25,6 +25,10 @@ function parseStorageKey(key: string): { source: string; id: string } | null {
   };
 }
 
+function isBcryptHash(password: string): boolean {
+  return password.startsWith('$2');
+}
+
 export async function POST(req: NextRequest) {
   try {
     // 检查存储类型
@@ -113,8 +117,12 @@ export async function POST(req: NextRequest) {
       const user = userData[username];
 
       // 重新注册用户（包含密码）
-      if (user.password) {
-        await db.registerUser(username, user.password);
+      if (typeof user.password === 'string' && user.password) {
+        if (isBcryptHash(user.password)) {
+          await db.setUserPasswordHash(username, user.password);
+        } else {
+          await db.registerUser(username, user.password);
+        }
       }
 
       // 导入播放记录

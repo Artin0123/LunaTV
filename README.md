@@ -27,7 +27,7 @@
 - 🌗 **响应式布局**：桌面侧边栏 + 移动底部导航，自适应各种屏幕尺寸。
 - 👿 **智能去广告**：自动跳过视频中的切片广告（实验性）。
 - 🔐 **安全认证**：bcrypt 密码哈希 + HMAC-SHA256 签名 + `auth` HttpOnly Cookie（客户端展示信息使用 `auth_client`）。
-- 📊 **系统监控**：内建监控 API（仅 owner/admin 可访问），实时查看内存、Redis 延迟、健康状态。
+- 📊 **系统监控**：内建监控 API（仅 owner/admin 可访问），实时查看内存、Upstash 延迟、健康状态。
 
 ### 注意：部署后项目为空壳项目，无内置播放源和直播源，需要自行收集
 
@@ -134,6 +134,8 @@ LunaTV 支持标准的苹果 CMS V10 API 格式。
 - Swagger UI：`/api/docs`
 - 自动生成 OpenAPI JSON：`pnpm gen:openapi:json`
 - 自动生成 TypeScript 类型：`pnpm gen:openapi:types`（输出到 `src/types/openapi.d.ts`）
+- 当前已覆盖核心 POST 接口（login/change-password/favorites/playrecords/searchhistory/skipconfigs）
+- 当前类型生成已可自动化，但前端尚未全面切换到 OpenAPI 类型（见 `TODO.md` 的 6.27-6.29）
 
 ## 环境变量
 
@@ -199,7 +201,7 @@ v100.0.0 以上版本可配合 [Selene](https://github.com/MoonTechLab/Selene) �
 
 ## License
 
-[MIT](LICENSE) © 2025 LunaTV & Contributors
+[MIT](LICENSE) © 2025-2026 LunaTV & Contributors
 
 ## 致谢
 

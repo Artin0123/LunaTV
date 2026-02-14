@@ -132,12 +132,12 @@
 
 ### 代码质量
 
-- [ ] **6.1** 拆分 `db.client.ts`（1635 行） → 多个模块
+- [ ] **6.1** 拆分 `db.client.ts`（1643 行） → 多个模块
 - [x] **6.2** 统一 `PlayRecord` / `Favorite` 类型定义（`db.client.ts` 改为从 `types.ts` 导入）
 - [x] **6.3** 提取 `ensureString`/`ensureStringArray` 到 `data-utils.ts`
 - [x] **6.4** 修复 `version_check.ts` 数组越界问题
 - [x] **6.5** 消除 `db.ts` 中的 `as any`，直接使用 `IStorage` 接口方法
-- [x] **6.6** 清理 `eslint-disable` 注释（`version.ts`、`data-utils.ts` 已清理，其余文件待续）
+- [x] **6.6** 清理 `eslint-disable` 注释（`version_check.ts`、`data-utils.ts` 已处理，其余文件待续）
 
 ### 性能优化
 
@@ -171,10 +171,10 @@
 
 ### 代码审查跟进（2026-02-14）
 
-- [x] **6.21** 移除 `data_migration/import` 中 `(db as any).storage`，改为调用 `DbManager` 公开方法
+- [x] **6.21** 移除 `data_migration/import/export` 中 `(db as any).storage`，改为调用 `DbManager` 公开方法（新增密码哈希读写接口）
 - [ ] **6.22** `RUNTIME_CONFIG` 类型化与统一访问层（先覆盖 `UserMenu`、`db.client`、`utils`）
-- [ ] **6.23** 拆分 `src/app/admin/page.tsx`（4823 行）
-- [ ] **6.24** 拆分 `src/lib/db.client.ts`（1650+ 行）
+- [ ] **6.23** 拆分 `src/app/admin/page.tsx`（5476 行）
+- [ ] **6.24** 拆分 `src/lib/db.client.ts`（1643 行）
 - [ ] **6.25** 缩小整档 `eslint-disable` 范围（优先 `admin/page.tsx`）
 
 ---
