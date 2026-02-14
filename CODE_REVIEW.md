@@ -29,7 +29,7 @@
 | 加密        | crypto-js (AES) + Web Crypto API (HMAC-SHA256)                             |
 | 认证        | bcrypt 密码哈希 + HMAC-SHA256 签名 + HttpOnly/Secure Cookie                |
 | 编码        | bs58 (Base58)                                                              |
-| 数据库      | Upstash Redis (HTTP) / localStorage / memory                               |
+| 数据库      | Upstash Redis (HTTP) / localStorage                                        |
 | PWA         | next-pwa（已停止维护，待替换）                                             |
 | 轮播        | Swiper 11                                                                  |
 | 代码质量    | ESLint 8 + Prettier 3 + Jest 30 + Husky 9 + Commitlint 20 + lint-staged 16 |

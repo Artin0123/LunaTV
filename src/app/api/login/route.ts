@@ -12,7 +12,6 @@ const STORAGE_TYPE =
   (process.env.NEXT_PUBLIC_STORAGE_TYPE as
     | 'localstorage'
     | 'upstash'
-    | 'memory'
     | undefined) || 'localstorage';
 
 // Cookie 安全配置
@@ -162,7 +161,7 @@ export async function POST(req: NextRequest) {
       return response;
     }
 
-    // 数据库模式（upstash / memory）——校验用户名并尝试连接数据库
+    // 数据库模式（upstash）——校验用户名并尝试连接数据库
     const body = await req.json();
     const parsed = validateBody(loginSchema, body);
     if (!parsed.success) {

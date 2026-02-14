@@ -20,10 +20,13 @@ export const changelog: ChangelogEntry[] = [
       '复查并对齐文档状态：将 `RUNTIME_CONFIG` 类型化工作从待处理项更新为已完成，统一 `CODE_REVIEW.md` 与 `ISSUES.md` 的当前状态描述',
       '补充说明当前性能优化进度：已完成低成本高收益项（如 Upstash 关键路径优化），高工时重构项继续保持在待处理清单中',
       '播放器依赖加载策略调整：`/play` 与 `/live` 页面的 `ArtPlayer` / `HLS.js` 改为运行时动态加载，降低开发态热更新时的 chunk 初始化崩溃风险',
+      '移除 `memory` 存储模式，统一为 `upstash/localstorage` 双模式；同步清理相关文档与环境变量说明，降低开发/线上行为分歧',
     ],
     fixed: [
       '修复直播页在开发模式下与点播页同类的播放器初始化崩溃问题（应用与点播页一致的延迟加载与初始化保护）',
       '修复 `POST /api/playrecords` 在空请求体或非 JSON 请求体时直接抛出 `Unexpected end of JSON input` 的问题，改为返回 400 校验错误',
+      '修复直播代理在重写嵌套 m3u8/ts/key 链接时遗漏 `moontv-source` 参数导致的 404（`/api/proxy/m3u8` → `/segment|/key|/m3u8`）',
+      '修复直播预检查对 `rtmp/rtsp` 协议误报 500 的问题，并在前端预检查失败时回退默认 m3u8 流程，避免因预检查失败直接中断播放',
     ],
   },
   {

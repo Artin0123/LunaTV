@@ -658,8 +658,13 @@ function LivePageClient() {
         artPlayerRef.current.off('error');
 
         // 销毁 ArtPlayer 实例
+        const container = artPlayerRef.current.container ?? artRef.current;
         artPlayerRef.current.destroy();
         artPlayerRef.current = null;
+        // 清空容器，避免 ArtPlayer 报 "Cannot mount multiple instances"
+        if (container?.innerHTML !== undefined) {
+          container.innerHTML = '';
+        }
       } catch (err) {
         console.warn('清理播放器资源时出错:', err);
         artPlayerRef.current = null;
@@ -963,15 +968,24 @@ function LivePageClient() {
       // precheck type
       let type = 'm3u8';
       const precheckUrl = `/api/live/precheck?url=${encodeURIComponent(videoUrl)}&moontv-source=${currentSourceRef.current?.key || ''}`;
-      const precheckResponse = await fetch(precheckUrl);
-      if (!precheckResponse.ok) {
-        console.error('预检查失败:', precheckResponse.statusText);
-        return;
+      try {
+        const precheckResponse = await fetch(precheckUrl);
+        if (!precheckResponse.ok) {
+          console.warn(
+            '预检查失败，回退默认 m3u8 播放:',
+            precheckResponse.status,
+          );
+        } else {
+          const precheckResult = await precheckResponse.json();
+          if (precheckResult.success && precheckResult.type) {
+            type = precheckResult.type;
+          }
+        }
+      } catch (precheckErr) {
+        console.warn('预检查请求异常，回退默认 m3u8 播放:', precheckErr);
       }
-      const precheckResult = await precheckResponse.json();
-      if (precheckResult.success) {
-        type = precheckResult.type;
-      }
+
+      if (cancelled) return;
 
       // 如果不是 m3u8 类型，设置不支持的类型并返回
       if (type !== 'm3u8') {
@@ -989,6 +1003,8 @@ function LivePageClient() {
       };
       const targetUrl = `/api/proxy/m3u8?url=${encodeURIComponent(videoUrl)}&moontv-source=${currentSourceRef.current?.key || ''}`;
       try {
+        if (cancelled) return;
+
         // 创建新的播放器实例
         ArtplayerClass.USE_RAF = false;
         ArtplayerClass.FULLSCREEN_WEB_IN_BODY = true;

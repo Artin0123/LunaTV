@@ -81,11 +81,10 @@ pnpm format            # 格式化代码 (Prettier)
 
 通过 `NEXT_PUBLIC_STORAGE_TYPE` 环境变量选择存储后端：
 
-| 存储模式          | 环境变量值     | 协议       | 说明                                                                                 |
-| ----------------- | -------------- | ---------- | ------------------------------------------------------------------------------------ |
-| **Upstash Redis** | `upstash`      | HTTP(S)    | 推荐。云端 Redis，HTTP 无状态，适合 Serverless                                       |
-| **LocalStorage**  | `localstorage` | 浏览器本地 | 数据存在浏览器中，仅限个人单机使用                                                   |
-| **Memory**        | `memory`       | 进程内存   | 开发测试用，重启后应用数据会丢失；浏览器登录 cookie 仍按过期时间保留，不建议生产使用 |
+| 存储模式          | 环境变量值     | 协议       | 说明                                           |
+| ----------------- | -------------- | ---------- | ---------------------------------------------- |
+| **Upstash Redis** | `upstash`      | HTTP(S)    | 推荐。云端 Redis，HTTP 无状态，适合 Serverless |
+| **LocalStorage**  | `localstorage` | 浏览器本地 | 数据存在浏览器中，仅限个人单机使用             |
 
 > **推荐**：Serverless 部署使用 `upstash` 模式。
 
@@ -100,13 +99,13 @@ pnpm format            # 格式化代码 (Prettier)
 
 ### 必填
 
-| 变量                       | 说明                                          | 示例                     |
-| -------------------------- | --------------------------------------------- | ------------------------ |
-| `USERNAME`                 | 站长账号                                      | `admin`                  |
-| `PASSWORD`                 | 站长密码（以 bcrypt 哈希存储）                | `your_strong_password`   |
-| `NEXT_PUBLIC_STORAGE_TYPE` | 存储类型（`upstash`/`localstorage`/`memory`） | `upstash`                |
-| `UPSTASH_URL`              | Upstash Redis HTTPS 端点                      | `https://xxx.upstash.io` |
-| `UPSTASH_TOKEN`            | Upstash Redis 令牌                            | `AXxxxxxxxxxxxx`         |
+| 变量                       | 说明                                 | 示例                     |
+| -------------------------- | ------------------------------------ | ------------------------ |
+| `USERNAME`                 | 站长账号                             | `admin`                  |
+| `PASSWORD`                 | 站长密码（以 bcrypt 哈希存储）       | `your_strong_password`   |
+| `NEXT_PUBLIC_STORAGE_TYPE` | 存储类型（`upstash`/`localstorage`） | `upstash`                |
+| `UPSTASH_URL`              | Upstash Redis HTTPS 端点             | `https://xxx.upstash.io` |
+| `UPSTASH_TOKEN`            | Upstash Redis 令牌                   | `AXxxxxxxxxxxxx`         |
 
 ### 可选（常用）
 

@@ -9,7 +9,8 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get('url');
-  const source = searchParams.get('moontv-source');
+  const source =
+    searchParams.get('moontv-source') || searchParams.get('source');
 
   if (!url) {
     return NextResponse.json({ error: 'Missing url' }, { status: 400 });
@@ -22,6 +23,16 @@ export async function GET(request: NextRequest) {
 
   try {
     const decodedUrl = decodeURIComponent(url);
+    const protocol = decodedUrl.split(':')[0]?.toLowerCase();
+
+    // 预检查阶段直接识别不支持的直播协议，避免返回 500 误导前端
+    if (protocol === 'rtmp' || protocol === 'rtsp') {
+      return NextResponse.json(
+        { success: true, type: protocol },
+        { status: 200 },
+      );
+    }
+
     let response = await fetch(decodedUrl, {
       method: 'HEAD',
       cache: 'no-cache',
@@ -45,8 +56,11 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: 'Failed to fetch', message: response.statusText },
-        { status: 500 },
+        {
+          error: 'Failed to fetch',
+          message: `${response.status} ${response.statusText}`.trim(),
+        },
+        { status: 502 },
       );
     }
 
@@ -68,7 +82,7 @@ export async function GET(request: NextRequest) {
         error: 'Failed to fetch',
         message: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 },
+      { status: 502 },
     );
   }
 }

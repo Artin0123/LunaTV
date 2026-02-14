@@ -15,7 +15,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get('url');
   const allowCORS = searchParams.get('allowCORS') === 'true';
-  const source = searchParams.get('moontv-source');
+  const source =
+    searchParams.get('moontv-source') || searchParams.get('source');
   if (!url) {
     return NextResponse.json({ error: 'Missing url' }, { status: 400 });
   }
@@ -43,8 +44,11 @@ export async function GET(request: Request) {
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: 'Failed to fetch m3u8' },
-        { status: 500 },
+        {
+          error: 'Failed to fetch m3u8',
+          message: `${response.status} ${response.statusText}`.trim(),
+        },
+        { status: 502 },
       );
     }
 
@@ -68,6 +72,7 @@ export async function GET(request: Request) {
         baseUrl,
         request,
         allowCORS,
+        source,
       );
 
       const headers = new Headers();
@@ -110,8 +115,11 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to fetch m3u8' },
-      { status: 500 },
+      {
+        error: 'Failed to fetch m3u8',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 502 },
     );
   } finally {
     // 确保 response 被正确关闭以释放资源
@@ -131,6 +139,7 @@ function rewriteM3U8Content(
   baseUrl: string,
   req: Request,
   allowCORS: boolean,
+  source: string | null,
 ) {
   // 从 referer 头提取协议信息
   const referer = req.headers.get('referer');
@@ -146,6 +155,9 @@ function rewriteM3U8Content(
 
   const host = req.headers.get('host');
   const proxyBase = `${protocol}://${host}/api/proxy`;
+  const sourceQuery = source
+    ? `&moontv-source=${encodeURIComponent(source)}`
+    : '';
 
   const lines = content.split('\n');
   const rewrittenLines: string[] = [];
@@ -158,19 +170,19 @@ function rewriteM3U8Content(
       const resolvedUrl = resolveUrl(baseUrl, line);
       const proxyUrl = allowCORS
         ? resolvedUrl
-        : `${proxyBase}/segment?url=${encodeURIComponent(resolvedUrl)}`;
+        : `${proxyBase}/segment?url=${encodeURIComponent(resolvedUrl)}${sourceQuery}`;
       rewrittenLines.push(proxyUrl);
       continue;
     }
 
     // 处理 EXT-X-MAP 标签中的 URI
     if (line.startsWith('#EXT-X-MAP:')) {
-      line = rewriteMapUri(line, baseUrl, proxyBase);
+      line = rewriteMapUri(line, baseUrl, proxyBase, sourceQuery);
     }
 
     // 处理 EXT-X-KEY 标签中的 URI
     if (line.startsWith('#EXT-X-KEY:')) {
-      line = rewriteKeyUri(line, baseUrl, proxyBase);
+      line = rewriteKeyUri(line, baseUrl, proxyBase, sourceQuery);
     }
 
     // 处理嵌套的 M3U8 文件 (EXT-X-STREAM-INF)
@@ -182,7 +194,7 @@ function rewriteM3U8Content(
         const nextLine = lines[i].trim();
         if (nextLine && !nextLine.startsWith('#')) {
           const resolvedUrl = resolveUrl(baseUrl, nextLine);
-          const proxyUrl = `${proxyBase}/m3u8?url=${encodeURIComponent(resolvedUrl)}`;
+          const proxyUrl = `${proxyBase}/m3u8?url=${encodeURIComponent(resolvedUrl)}${sourceQuery}`;
           rewrittenLines.push(proxyUrl);
         } else {
           rewrittenLines.push(nextLine);
@@ -197,23 +209,33 @@ function rewriteM3U8Content(
   return rewrittenLines.join('\n');
 }
 
-function rewriteMapUri(line: string, baseUrl: string, proxyBase: string) {
+function rewriteMapUri(
+  line: string,
+  baseUrl: string,
+  proxyBase: string,
+  sourceQuery: string,
+) {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
     const originalUri = uriMatch[1];
     const resolvedUrl = resolveUrl(baseUrl, originalUri);
-    const proxyUrl = `${proxyBase}/segment?url=${encodeURIComponent(resolvedUrl)}`;
+    const proxyUrl = `${proxyBase}/segment?url=${encodeURIComponent(resolvedUrl)}${sourceQuery}`;
     return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
   }
   return line;
 }
 
-function rewriteKeyUri(line: string, baseUrl: string, proxyBase: string) {
+function rewriteKeyUri(
+  line: string,
+  baseUrl: string,
+  proxyBase: string,
+  sourceQuery: string,
+) {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
     const originalUri = uriMatch[1];
     const resolvedUrl = resolveUrl(baseUrl, originalUri);
-    const proxyUrl = `${proxyBase}/key?url=${encodeURIComponent(resolvedUrl)}`;
+    const proxyUrl = `${proxyBase}/key?url=${encodeURIComponent(resolvedUrl)}${sourceQuery}`;
     return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
   }
   return line;

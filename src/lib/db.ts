@@ -1,28 +1,23 @@
 /* eslint-disable no-console */
 
 import { AdminConfig } from './admin.types';
-import { InMemoryStorage } from './memory.db';
 import { Favorite, IStorage, PlayRecord, SkipConfig } from './types';
 import { UpstashRedisStorage } from './upstash.db';
 
-// storage type 常量: 'localstorage' | 'upstash' | 'memory'，默认 'localstorage'
+// storage type 常量: 'localstorage' | 'upstash'，默认 'localstorage'
 const STORAGE_TYPE =
   (process.env.NEXT_PUBLIC_STORAGE_TYPE as
     | 'localstorage'
     | 'upstash'
-    | 'memory'
     | undefined) || 'localstorage';
 
 // 创建存储实例
 // - upstash：连接 Upstash Redis（生产环境）
-// - memory：纯内存存储（开发测试，重启后数据消失）
 // - localstorage：返回 null，由客户端 db.client.ts 处理
 function createStorage(): IStorage | null {
   switch (STORAGE_TYPE) {
     case 'upstash':
       return new UpstashRedisStorage();
-    case 'memory':
-      return new InMemoryStorage();
     case 'localstorage':
     default:
       return null;

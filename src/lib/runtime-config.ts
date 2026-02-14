@@ -1,4 +1,4 @@
-export type StorageType = 'localstorage' | 'upstash' | 'memory';
+export type StorageType = 'localstorage' | 'upstash';
 export type DoubanProxyType =
   | 'direct'
   | 'cors-proxy-zwei'
@@ -49,7 +49,7 @@ const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
 };
 
 function toStorageType(value: unknown): StorageType {
-  return value === 'upstash' || value === 'memory' || value === 'localstorage'
+  return value === 'upstash' || value === 'localstorage'
     ? value
     : DEFAULT_RUNTIME_CONFIG.STORAGE_TYPE;
 }

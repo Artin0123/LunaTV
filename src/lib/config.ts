@@ -55,6 +55,8 @@ export const API_CONFIG = {
 
 // 在模块加载时根据环境决定配置来源
 let cachedConfig: AdminConfig;
+const STORAGE_TYPE = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
+const USE_PROCESS_CONFIG_CACHE = STORAGE_TYPE === 'localstorage';
 
 // 从配置文件补充管理员配置
 export function refineConfig(adminConfig: AdminConfig): AdminConfig {
@@ -294,27 +296,42 @@ async function getInitConfig(
 }
 
 export async function getConfig(): Promise<AdminConfig> {
-  // 直接使用内存缓存
-  if (cachedConfig) {
+  // 仅 localstorage 模式使用进程内缓存；upstash 在 serverless 多实例下需避免缓存不一致
+  if (USE_PROCESS_CONFIG_CACHE && cachedConfig) {
     return cachedConfig;
   }
 
   // 读 db
   let adminConfig: AdminConfig | null = null;
+  let dbReadFailed = false;
   try {
     adminConfig = await db.getAdminConfig();
   } catch (e) {
+    dbReadFailed = true;
     console.error('获取管理员配置失败:', e);
   }
 
-  // db 中无配置，执行一次初始化
+  // 读取失败时，不要回退初始化并覆盖现有配置
+  if (dbReadFailed) {
+    throw new Error('读取管理员配置失败，请稍后重试');
+  }
+
+  // db 中无配置，执行一次初始化并持久化
   if (!adminConfig) {
     adminConfig = await getInitConfig('');
+    adminConfig = configSelfCheck(adminConfig);
+    await db.saveAdminConfig(adminConfig);
+    if (USE_PROCESS_CONFIG_CACHE) {
+      cachedConfig = adminConfig;
+    }
+    return adminConfig;
   }
+
   adminConfig = configSelfCheck(adminConfig);
-  cachedConfig = adminConfig;
-  db.saveAdminConfig(cachedConfig);
-  return cachedConfig;
+  if (USE_PROCESS_CONFIG_CACHE) {
+    cachedConfig = adminConfig;
+  }
+  return adminConfig;
 }
 
 export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
@@ -424,7 +441,9 @@ export async function resetConfig() {
     originConfig.ConfigFile,
     originConfig.ConfigSubscribtion,
   );
-  cachedConfig = adminConfig;
+  if (USE_PROCESS_CONFIG_CACHE) {
+    cachedConfig = adminConfig;
+  }
   await db.saveAdminConfig(adminConfig);
 
   return;
@@ -492,5 +511,7 @@ export async function getAvailableApiSites(user?: string): Promise<ApiSite[]> {
 }
 
 export async function setCachedConfig(config: AdminConfig) {
-  cachedConfig = config;
+  if (USE_PROCESS_CONFIG_CACHE) {
+    cachedConfig = config;
+  }
 }

@@ -2,7 +2,7 @@
 
 > **目标**：将 LunaTV 改造为纯 Serverless 部署方案
 > **部署平台**：Vercel
-> **数据库**：Upstash（云端 HTTP Redis）/ localStorage / memory（开发测试）
+> **数据库**：Upstash（云端 HTTP Redis）/ localStorage
 > **更新日期**：2026-02-14
 
 ---
@@ -33,12 +33,12 @@
 
 ## 阶段二：移除不兼容的存储驱动 ✅
 
-> **目标**：移除 Redis / Kvrocks TCP 驱动，保留 Upstash (HTTP) + localStorage + memory
+> **目标**：移除 Redis / Kvrocks TCP 驱动，保留 Upstash (HTTP) + localStorage
 
 - [x] **2.1** 删除 `src/lib/redis.db.ts`
 - [x] **2.2** 删除 `src/lib/kvrocks.db.ts`
 - [x] **2.3** 删除 `src/lib/redis-base.db.ts`
-- [x] **2.4** 修改 `src/lib/db.ts`：保留 `upstash`、`localstorage`、`memory`
+- [x] **2.4** 修改 `src/lib/db.ts`：保留 `upstash`、`localstorage`
 - [x] **2.5** 修改 `src/lib/db.client.ts`：移除 `'redis'` 类型
 - [x] **2.6** 卸载 `redis` npm 包
 - [x] **2.7** 确认 `@upstash/redis` 保留

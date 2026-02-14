@@ -28,7 +28,6 @@
 - 👿 **智能去广告**：自动跳过视频中的切片广告（实验性）。
 - 🔐 **安全认证**：bcrypt 密码哈希 + HMAC-SHA256 签名 + `auth` HttpOnly Cookie（客户端展示信息使用 `auth_client`）。
 - 📊 **系统监控**：内建监控 API（仅 owner/admin 可访问），实时查看内存、Upstash 延迟、健康状态。
-- 🛠️ **播放器稳定性优化**：点播 `/play` 与直播 `/live` 已改为运行时动态加载播放器依赖，降低开发态热更新时的崩溃概率。
 
 ### 注意：部署后项目为空壳项目，无内置播放源和直播源，需要自行收集
 
@@ -62,7 +61,7 @@
 | 播放器    | [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) · [HLS.js](https://github.com/video-dev/hls.js/) |
 | 代码质量  | ESLint 8 · Prettier 3 · Jest 30 · Husky 9 · Commitlint 20                                             |
 | 部署      | Serverless (Vercel)                                                                                   |
-| 数据库    | [Upstash Redis](https://upstash.com/) (HTTP) + localStorage + memory                                  |
+| 数据库    | [Upstash Redis](https://upstash.com/) (HTTP) + localStorage                                           |
 
 ## 部署
 
@@ -136,34 +135,32 @@ LunaTV 支持标准的苹果 CMS V10 API 格式。
 - 自动生成 OpenAPI JSON：`pnpm gen:openapi:json`
 - 自动生成 TypeScript 类型：`pnpm gen:openapi:types`（输出到 `src/types/openapi.d.ts`）
 - 当前已覆盖核心接口（login/change-password/favorites/playrecords/searchhistory/skipconfigs 的 GET/POST/DELETE）
-- 前端核心调用已切换到 OpenAPI typed helper，并在 CI 增加产物一致性检查（见 `TODO.md` 的 6.27-6.29）
 
 ## 环境变量
 
-| 变量                                | 说明                     | 可选值                        | 默认值               |
-| ----------------------------------- | ------------------------ | ----------------------------- | -------------------- |
-| USERNAME                            | 站长账号                 | 任意字符串                    | 无默认，必填字段     |
-| PASSWORD                            | 站长密码                 | 任意字符串                    | 无默认，必填字段     |
-| SITE_BASE                           | 站点 URL                 | 形如 https://example.com      | 空                   |
-| NEXT_PUBLIC_SITE_NAME               | 站点名称                 | 任意字符串                    | LunaTV               |
-| ANNOUNCEMENT                        | 站点公告                 | 任意字符串                    | 默认免责声明         |
-| NEXT_PUBLIC_STORAGE_TYPE            | 存储类型                 | upstash、localstorage、memory | 无默认，必填字段     |
-| UPSTASH_URL                         | Upstash Redis HTTPS 端点 | 连接 URL                      | 空                   |
-| UPSTASH_TOKEN                       | Upstash Redis 令牌       | 连接 token                    | 空                   |
-| CRON_SECRET                         | Cron 任务认证密钥        | 任意字符串                    | 空（不设置则不认证） |
-| NEXT_PUBLIC_SEARCH_MAX_PAGE         | 搜索最大页数             | 1-50                          | 5                    |
-| NEXT_PUBLIC_DOUBAN_PROXY_TYPE       | 豆瓣数据源请求方式       | 见下方                        | direct               |
-| NEXT_PUBLIC_DOUBAN_PROXY            | 自定义豆瓣数据代理 URL   | url prefix                    | 空                   |
-| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE | 豆瓣图片代理类型         | 见下方                        | direct               |
-| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY      | 自定义豆瓣图片代理 URL   | url prefix                    | 空                   |
-| NEXT_PUBLIC_DISABLE_YELLOW_FILTER   | 关闭色情内容过滤         | true/false                    | false                |
-| NEXT_PUBLIC_FLUID_SEARCH            | 是否开启搜索流式输出     | true/false                    | true                 |
+| 变量                                | 说明                     | 可选值                   | 默认值               |
+| ----------------------------------- | ------------------------ | ------------------------ | -------------------- |
+| USERNAME                            | 站长账号                 | 任意字符串               | 无默认，必填字段     |
+| PASSWORD                            | 站长密码                 | 任意字符串               | 无默认，必填字段     |
+| SITE_BASE                           | 站点 URL                 | 形如 https://example.com | 空                   |
+| NEXT_PUBLIC_SITE_NAME               | 站点名称                 | 任意字符串               | LunaTV               |
+| ANNOUNCEMENT                        | 站点公告                 | 任意字符串               | 默认免责声明         |
+| NEXT_PUBLIC_STORAGE_TYPE            | 存储类型                 | upstash、localstorage    | 无默认，必填字段     |
+| UPSTASH_URL                         | Upstash Redis HTTPS 端点 | 连接 URL                 | 空                   |
+| UPSTASH_TOKEN                       | Upstash Redis 令牌       | 连接 token               | 空                   |
+| CRON_SECRET                         | Cron 任务认证密钥        | 任意字符串               | 空（不设置则不认证） |
+| NEXT_PUBLIC_SEARCH_MAX_PAGE         | 搜索最大页数             | 1-50                     | 5                    |
+| NEXT_PUBLIC_DOUBAN_PROXY_TYPE       | 豆瓣数据源请求方式       | 见下方                   | direct               |
+| NEXT_PUBLIC_DOUBAN_PROXY            | 自定义豆瓣数据代理 URL   | url prefix               | 空                   |
+| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY_TYPE | 豆瓣图片代理类型         | 见下方                   | direct               |
+| NEXT_PUBLIC_DOUBAN_IMAGE_PROXY      | 自定义豆瓣图片代理 URL   | url prefix               | 空                   |
+| NEXT_PUBLIC_DISABLE_YELLOW_FILTER   | 关闭色情内容过滤         | true/false               | false                |
+| NEXT_PUBLIC_FLUID_SEARCH            | 是否开启搜索流式输出     | true/false               | true                 |
 
 `NEXT_PUBLIC_STORAGE_TYPE` 说明：
 
 - `upstash`：云端 Redis 持久化，适合生产环境。
 - `localstorage`：数据保存在浏览器本地，仅适合单机测试。
-- `memory`：数据保存在服务进程内存，重启服务后应用数据会清空；浏览器登录 cookie 仍按有效期保留，可通过登出或清除 cookie 立即重置登录态。
 
 NEXT_PUBLIC_DOUBAN_PROXY_TYPE 选项：
 
