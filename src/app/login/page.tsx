@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 'use client';
 
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
+import { postOpenApi } from '@/lib/openapi-client';
+import { getStorageType } from '@/lib/runtime-config';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 
@@ -42,12 +42,13 @@ function VersionDisplay() {
       <span className='font-mono'>v{CURRENT_VERSION}</span>
       {!isChecking && updateStatus !== UpdateStatus.FETCH_FAILED && (
         <div
-          className={`flex items-center gap-1.5 ${updateStatus === UpdateStatus.HAS_UPDATE
-            ? 'text-yellow-600 dark:text-yellow-400'
-            : updateStatus === UpdateStatus.NO_UPDATE
-              ? 'text-green-600 dark:text-green-400'
-              : ''
-            }`}
+          className={`flex items-center gap-1.5 ${
+            updateStatus === UpdateStatus.HAS_UPDATE
+              ? 'text-yellow-600 dark:text-yellow-400'
+              : updateStatus === UpdateStatus.NO_UPDATE
+                ? 'text-green-600 dark:text-green-400'
+                : ''
+          }`}
         >
           {updateStatus === UpdateStatus.HAS_UPDATE && (
             <>
@@ -81,8 +82,8 @@ function LoginPageClient() {
   // 在客户端挂载后设置配置
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const storageType = (window as any).RUNTIME_CONFIG?.STORAGE_TYPE;
-      setShouldAskUsername(storageType && storageType !== 'localstorage');
+      const storageType = getStorageType();
+      setShouldAskUsername(storageType !== 'localstorage');
     }
   }, []);
 
@@ -94,32 +95,32 @@ function LoginPageClient() {
 
     try {
       setLoading(true);
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          password,
-          ...(shouldAskUsername ? { username } : {}),
-        }),
+      const result = await postOpenApi('/api/login', {
+        password,
+        ...(shouldAskUsername ? { username } : {}),
       });
 
-      if (res.ok) {
+      if (result.ok) {
         const redirect = searchParams.get('redirect') || '/';
         router.replace(redirect);
-      } else if (res.status === 401) {
+      } else if (result.status === 401) {
         setError('密码错误');
       } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? '服务器错误');
+        const message =
+          typeof result.data === 'object' &&
+          result.data !== null &&
+          'error' in result.data &&
+          typeof result.data.error === 'string'
+            ? result.data.error
+            : '服务器错误';
+        setError(message);
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请稍后重试');
     } finally {
       setLoading(false);
     }
   };
-
-
 
   return (
     <div className='relative min-h-screen flex items-center justify-center px-4 overflow-hidden'>
@@ -170,9 +171,7 @@ function LoginPageClient() {
           {/* 登录按钮 */}
           <button
             type='submit'
-            disabled={
-              !password || loading || (shouldAskUsername && !username)
-            }
+            disabled={!password || loading || (shouldAskUsername && !username)}
             className='inline-flex w-full justify-center rounded-lg bg-green-600 py-3 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:from-green-600 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50'
           >
             {loading ? '登录中...' : '登录'}

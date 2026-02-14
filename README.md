@@ -61,7 +61,7 @@
 | 播放器    | [ArtPlayer](https://github.com/zhw2590582/ArtPlayer) · [HLS.js](https://github.com/video-dev/hls.js/) |
 | 代码质量  | ESLint 8 · Prettier 3 · Jest 30 · Husky 9 · Commitlint 20                                             |
 | 部署      | Serverless (Vercel)                                                                                   |
-| 数据库    | [Upstash Redis](https://upstash.com/) (HTTP)                                                          |
+| 数据库    | [Upstash Redis](https://upstash.com/) (HTTP) + localStorage + memory                                  |
 
 ## 部署
 
@@ -134,8 +134,8 @@ LunaTV 支持标准的苹果 CMS V10 API 格式。
 - Swagger UI：`/api/docs`
 - 自动生成 OpenAPI JSON：`pnpm gen:openapi:json`
 - 自动生成 TypeScript 类型：`pnpm gen:openapi:types`（输出到 `src/types/openapi.d.ts`）
-- 当前已覆盖核心 POST 接口（login/change-password/favorites/playrecords/searchhistory/skipconfigs）
-- 当前类型生成已可自动化，但前端尚未全面切换到 OpenAPI 类型（见 `TODO.md` 的 6.27-6.29）
+- 当前已覆盖核心接口（login/change-password/favorites/playrecords/searchhistory/skipconfigs 的 GET/POST/DELETE）
+- 前端核心调用已切换到 OpenAPI typed helper，并在 CI 增加产物一致性检查（见 `TODO.md` 的 6.27-6.29）
 
 ## 环境变量
 

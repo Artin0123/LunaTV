@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console,no-case-declarations */
 
+import { getRuntimeConfig } from './runtime-config';
 import { DoubanItem, DoubanResult } from './types';
 
 interface DoubanCategoriesParams {
@@ -59,7 +60,7 @@ interface DoubanRecommendApiResponse {
  */
 async function fetchWithTimeout(
   url: string,
-  proxyUrl: string
+  proxyUrl: string,
 ): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
@@ -94,22 +95,27 @@ async function fetchWithTimeout(
 
 function getDoubanProxyConfig(): {
   proxyType:
-  | 'direct'
-  | 'cors-proxy-zwei'
-  | 'cmliussss-cdn-tencent'
-  | 'cmliussss-cdn-ali'
-  | 'cors-anywhere'
-  | 'custom';
+    | 'direct'
+    | 'cors-proxy-zwei'
+    | 'cmliussss-cdn-tencent'
+    | 'cmliussss-cdn-ali'
+    | 'cors-anywhere'
+    | 'custom';
   proxyUrl: string;
 } {
+  const runtimeConfig = getRuntimeConfig();
+  const localProxyType = localStorage.getItem('doubanDataSource');
   const doubanProxyType =
-    localStorage.getItem('doubanDataSource') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
-    'cmliussss-cdn-tencent';
+    localProxyType === 'direct' ||
+    localProxyType === 'cors-proxy-zwei' ||
+    localProxyType === 'cmliussss-cdn-tencent' ||
+    localProxyType === 'cmliussss-cdn-ali' ||
+    localProxyType === 'cors-anywhere' ||
+    localProxyType === 'custom'
+      ? localProxyType
+      : runtimeConfig.DOUBAN_PROXY_TYPE;
   const doubanProxy =
-    localStorage.getItem('doubanProxyUrl') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY ||
-    '';
+    localStorage.getItem('doubanProxyUrl') || runtimeConfig.DOUBAN_PROXY || '';
   return {
     proxyType: doubanProxyType,
     proxyUrl: doubanProxy,
@@ -123,7 +129,7 @@ export async function fetchDoubanCategories(
   params: DoubanCategoriesParams,
   proxyUrl: string,
   useTencentCDN = false,
-  useAliCDN = false
+  useAliCDN = false,
 ): Promise<DoubanResult> {
   const { kind, category, type, pageLimit = 20, pageStart = 0 } = params;
 
@@ -153,7 +159,7 @@ export async function fetchDoubanCategories(
   try {
     const response = await fetchWithTimeout(
       target,
-      useTencentCDN || useAliCDN ? '' : proxyUrl
+      useTencentCDN || useAliCDN ? '' : proxyUrl,
     );
 
     if (!response.ok) {
@@ -182,7 +188,7 @@ export async function fetchDoubanCategories(
       window.dispatchEvent(
         new CustomEvent('globalError', {
           detail: { message: '获取豆瓣分类数据失败' },
-        })
+        }),
       );
     }
     throw new Error(`获取豆瓣分类数据失败: ${(error as Error).message}`);
@@ -193,7 +199,7 @@ export async function fetchDoubanCategories(
  * 统一的豆瓣分类数据获取函数，根据代理设置选择使用服务端 API 或客户端代理获取
  */
 export async function getDoubanCategories(
-  params: DoubanCategoriesParams
+  params: DoubanCategoriesParams,
 ): Promise<DoubanResult> {
   const { kind, category, type, pageLimit = 20, pageStart = 0 } = params;
   const { proxyType, proxyUrl } = getDoubanProxyConfig();
@@ -211,7 +217,7 @@ export async function getDoubanCategories(
     case 'direct':
     default:
       const response = await fetch(
-        `/api/douban/categories?kind=${kind}&category=${category}&type=${type}&limit=${pageLimit}&start=${pageStart}`
+        `/api/douban/categories?kind=${kind}&category=${category}&type=${type}&limit=${pageLimit}&start=${pageStart}`,
       );
 
       return response.json();
@@ -226,7 +232,7 @@ interface DoubanListParams {
 }
 
 export async function getDoubanList(
-  params: DoubanListParams
+  params: DoubanListParams,
 ): Promise<DoubanResult> {
   const { tag, type, pageLimit = 20, pageStart = 0 } = params;
   const { proxyType, proxyUrl } = getDoubanProxyConfig();
@@ -244,7 +250,7 @@ export async function getDoubanList(
     case 'direct':
     default:
       const response = await fetch(
-        `/api/douban?tag=${tag}&type=${type}&pageSize=${pageLimit}&pageStart=${pageStart}`
+        `/api/douban?tag=${tag}&type=${type}&pageSize=${pageLimit}&pageStart=${pageStart}`,
       );
 
       return response.json();
@@ -255,7 +261,7 @@ export async function fetchDoubanList(
   params: DoubanListParams,
   proxyUrl: string,
   useTencentCDN = false,
-  useAliCDN = false
+  useAliCDN = false,
 ): Promise<DoubanResult> {
   const { tag, type, pageLimit = 20, pageStart = 0 } = params;
 
@@ -285,7 +291,7 @@ export async function fetchDoubanList(
   try {
     const response = await fetchWithTimeout(
       target,
-      useTencentCDN || useAliCDN ? '' : proxyUrl
+      useTencentCDN || useAliCDN ? '' : proxyUrl,
     );
 
     if (!response.ok) {
@@ -314,7 +320,7 @@ export async function fetchDoubanList(
       window.dispatchEvent(
         new CustomEvent('globalError', {
           detail: { message: '获取豆瓣列表数据失败' },
-        })
+        }),
       );
     }
     throw new Error(`获取豆瓣分类数据失败: ${(error as Error).message}`);
@@ -335,7 +341,7 @@ interface DoubanRecommendsParams {
 }
 
 export async function getDoubanRecommends(
-  params: DoubanRecommendsParams
+  params: DoubanRecommendsParams,
 ): Promise<DoubanResult> {
   const {
     kind,
@@ -364,7 +370,7 @@ export async function getDoubanRecommends(
     case 'direct':
     default:
       const response = await fetch(
-        `/api/douban/recommends?kind=${kind}&limit=${pageLimit}&start=${pageStart}&category=${category}&format=${format}&region=${region}&year=${year}&platform=${platform}&sort=${sort}&label=${label}`
+        `/api/douban/recommends?kind=${kind}&limit=${pageLimit}&start=${pageStart}&category=${category}&format=${format}&region=${region}&year=${year}&platform=${platform}&sort=${sort}&label=${label}`,
       );
 
       return response.json();
@@ -375,7 +381,7 @@ async function fetchDoubanRecommends(
   params: DoubanRecommendsParams,
   proxyUrl: string,
   useTencentCDN = false,
-  useAliCDN = false
+  useAliCDN = false,
 ): Promise<DoubanResult> {
   const { kind, pageLimit = 20, pageStart = 0 } = params;
   let { category, format, region, year, platform, sort, label } = params;
@@ -450,7 +456,7 @@ async function fetchDoubanRecommends(
   try {
     const response = await fetchWithTimeout(
       target,
-      useTencentCDN || useAliCDN ? '' : proxyUrl
+      useTencentCDN || useAliCDN ? '' : proxyUrl,
     );
 
     if (!response.ok) {

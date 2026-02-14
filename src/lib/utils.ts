@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 import Hls from 'hls.js';
 
+import { getRuntimeConfig } from './runtime-config';
+
 function getDoubanImageProxyConfig(): {
   proxyType:
     | 'direct'
@@ -11,13 +13,20 @@ function getDoubanImageProxyConfig(): {
     | 'custom';
   proxyUrl: string;
 } {
+  const runtimeConfig = getRuntimeConfig();
+  const localProxyType = localStorage.getItem('doubanImageProxyType');
   const doubanImageProxyType =
-    localStorage.getItem('doubanImageProxyType') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
-    'cmliussss-cdn-tencent';
+    localProxyType === 'direct' ||
+    localProxyType === 'server' ||
+    localProxyType === 'img3' ||
+    localProxyType === 'cmliussss-cdn-tencent' ||
+    localProxyType === 'cmliussss-cdn-ali' ||
+    localProxyType === 'custom'
+      ? localProxyType
+      : runtimeConfig.DOUBAN_IMAGE_PROXY_TYPE;
   const doubanImageProxy =
     localStorage.getItem('doubanImageProxyUrl') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY ||
+    runtimeConfig.DOUBAN_IMAGE_PROXY ||
     '';
   return {
     proxyType: doubanImageProxyType,

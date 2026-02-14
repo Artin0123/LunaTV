@@ -19,6 +19,7 @@ import {
   getSearchHistory,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { getRuntimeConfig } from '@/lib/runtime-config';
 import { SearchResult } from '@/lib/types';
 
 import PageLayout from '@/components/PageLayout';
@@ -389,8 +390,7 @@ function SearchPageClient() {
     // 读取流式搜索设置
     if (typeof window !== 'undefined') {
       const savedFluidSearch = localStorage.getItem('fluidSearch');
-      const defaultFluidSearch =
-        (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+      const defaultFluidSearch = getRuntimeConfig().FLUID_SEARCH;
       if (savedFluidSearch !== null) {
         setUseFluidSearch(JSON.parse(savedFluidSearch));
       } else if (defaultFluidSearch !== undefined) {
@@ -479,8 +479,7 @@ function SearchPageClient() {
         if (savedFluidSearch !== null) {
           currentFluidSearch = JSON.parse(savedFluidSearch);
         } else {
-          const defaultFluidSearch =
-            (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+          const defaultFluidSearch = getRuntimeConfig().FLUID_SEARCH;
           currentFluidSearch = defaultFluidSearch;
         }
       }

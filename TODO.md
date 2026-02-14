@@ -2,7 +2,7 @@
 
 > **目标**：将 LunaTV 改造为纯 Serverless 部署方案
 > **部署平台**：Vercel
-> **数据库**：Upstash（云端 HTTP Redis）或 localStorage（无后端）
+> **数据库**：Upstash（云端 HTTP Redis）/ localStorage / memory（开发测试）
 > **更新日期**：2026-02-14
 
 ---
@@ -33,12 +33,12 @@
 
 ## 阶段二：移除不兼容的存储驱动 ✅
 
-> **目标**：移除 Redis / Kvrocks TCP 驱动，保留 Upstash (HTTP) 和 localStorage
+> **目标**：移除 Redis / Kvrocks TCP 驱动，保留 Upstash (HTTP) + localStorage + memory
 
 - [x] **2.1** 删除 `src/lib/redis.db.ts`
 - [x] **2.2** 删除 `src/lib/kvrocks.db.ts`
 - [x] **2.3** 删除 `src/lib/redis-base.db.ts`
-- [x] **2.4** 修改 `src/lib/db.ts`：仅保留 `upstash` 和 `localstorage`
+- [x] **2.4** 修改 `src/lib/db.ts`：保留 `upstash`、`localstorage`、`memory`
 - [x] **2.5** 修改 `src/lib/db.client.ts`：移除 `'redis'` 类型
 - [x] **2.6** 卸载 `redis` npm 包
 - [x] **2.7** 确认 `@upstash/redis` 保留
@@ -165,14 +165,14 @@
 - [x] **6.17** 创建 `/api/docs` Swagger UI 路由
 - [x] **6.18** 为核心 API 添加 Zod Schema 定义（已覆盖 login、change-password、favorites、playrecords、searchhistory、skipconfigs）
 - [x] **6.26** 新增 OpenAPI 自动生成脚本（`gen:openapi:json` / `gen:openapi:types`）
-- [ ] **6.27** 新增 typed API helper，基于 `src/types/openapi.d.ts` 推导请求/响应类型
-- [ ] **6.28** 将核心前端 API 调用逐步迁移到 OpenAPI 生成类型（优先 auth + favorites + playrecords）
-- [ ] **6.29** 在 CI 加入 OpenAPI 产物一致性检查（防止 schema 与类型漂移）
+- [x] **6.27** 新增 typed API helper，基于 `src/types/openapi.d.ts` 推导请求/响应类型
+- [x] **6.28** 将核心前端 API 调用迁移到 OpenAPI 生成类型（已覆盖 auth、change-password、favorites、playrecords、searchhistory、skipconfigs 的 GET/POST/DELETE 核心调用）
+- [x] **6.29** 在 CI 加入 OpenAPI 产物一致性检查（新增 OpenAPI Consistency workflow，防止 schema 与类型漂移）
 
 ### 代码审查跟进（2026-02-14）
 
 - [x] **6.21** 移除 `data_migration/import/export` 中 `(db as any).storage`，改为调用 `DbManager` 公开方法（新增密码哈希读写接口）
-- [ ] **6.22** `RUNTIME_CONFIG` 类型化与统一访问层（先覆盖 `UserMenu`、`db.client`、`utils`）
+- [x] **6.22** `RUNTIME_CONFIG` 类型化与统一访问层（已覆盖 `UserMenu`、`db.client`、`utils`，并扩展到 `login/search/douban/Sidebar/MobileBottomNav`）
 - [ ] **6.23** 拆分 `src/app/admin/page.tsx`（5476 行）
 - [ ] **6.24** 拆分 `src/lib/db.client.ts`（1643 行）
 - [ ] **6.25** 缩小整档 `eslint-disable` 范围（优先 `admin/page.tsx`）
@@ -185,15 +185,15 @@
 
 ### 后端 API
 
-- [x] **7.1** `/api/admin/monitor` — 返回内存使用、Redis 延迟、实例存活时间
+- [x] **7.1** `/api/admin/monitor` — 返回内存使用、Upstash/数据库延迟、实例存活时间
 - [x] **7.2** `/api/admin/monitor/health` — 健康检查（Upstash + 采集源连通性）
 
 ### 前端面板
 
 - [x] **7.3** 在管理后台新增「系统监控」标签页
-  - 系统概览卡片：内存使用、Redis 延迟、健康状态指示灯
+  - 系统概览卡片：内存使用、Upstash/数据库延迟、健康状态指示灯
   - 实时趋势图：最近 N 次轮询数据走势（SVG Sparkline）
-  - API 源健康状态 + Redis 状态
+  - API 源健康状态 + Upstash 状态
 - [x] **7.4** 自动轮询（每 10 秒，最多保留 60 条 = 10 分钟数据）
 - [x] **7.5** 仅 owner / admin 可访问
 

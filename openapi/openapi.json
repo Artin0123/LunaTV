@@ -48,6 +48,211 @@
           }
         },
         "required": ["success"]
+      },
+      "FavoriteItem": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "year": {
+            "type": "string",
+            "default": ""
+          },
+          "cover": {
+            "type": "string",
+            "default": ""
+          },
+          "total_episodes": {
+            "type": "integer",
+            "default": 0
+          },
+          "save_time": {
+            "type": "number",
+            "default": 1771058034683
+          },
+          "search_title": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string",
+            "enum": ["vod", "live"]
+          }
+        },
+        "required": ["title", "source_name"]
+      },
+      "PlayRecordItem": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "year": {
+            "type": "string",
+            "default": ""
+          },
+          "cover": {
+            "type": "string",
+            "default": ""
+          },
+          "index": {
+            "type": "integer",
+            "default": 0
+          },
+          "total_episodes": {
+            "type": "integer",
+            "default": 0
+          },
+          "play_time": {
+            "type": "number",
+            "default": 0
+          },
+          "total_time": {
+            "type": "number",
+            "default": 0
+          },
+          "save_time": {
+            "type": "number",
+            "default": 1771058034684
+          },
+          "search_title": {
+            "type": "string"
+          }
+        },
+        "required": ["title", "source_name"]
+      },
+      "SkipConfigItem": {
+        "type": "object",
+        "properties": {
+          "enable": {
+            "type": "boolean",
+            "default": true
+          },
+          "intro_time": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          },
+          "outro_time": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          }
+        }
+      },
+      "FavoriteMap": {
+        "type": "object",
+        "additionalProperties": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/FavoriteItem"
+            },
+            {
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "year": {
+                  "type": "string",
+                  "default": ""
+                },
+                "cover": {
+                  "type": "string",
+                  "default": ""
+                },
+                "total_episodes": {
+                  "type": "integer",
+                  "default": 0
+                },
+                "save_time": {
+                  "type": "number",
+                  "default": 1771058034684
+                },
+                "search_title": {
+                  "type": "string"
+                },
+                "origin": {
+                  "type": "string",
+                  "enum": ["vod", "live"]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "PlayRecordMap": {
+        "type": "object",
+        "additionalProperties": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/PlayRecordItem"
+            },
+            {
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "source_name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "year": {
+                  "type": "string",
+                  "default": ""
+                },
+                "cover": {
+                  "type": "string",
+                  "default": ""
+                },
+                "index": {
+                  "type": "integer",
+                  "default": 0
+                },
+                "total_episodes": {
+                  "type": "integer",
+                  "default": 0
+                },
+                "play_time": {
+                  "type": "number",
+                  "default": 0
+                },
+                "total_time": {
+                  "type": "number",
+                  "default": 0
+                },
+                "save_time": {
+                  "type": "number",
+                  "default": 1771058034685
+                },
+                "search_title": {
+                  "type": "string"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "SkipConfigMap": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/SkipConfigItem"
+        }
       }
     },
     "parameters": {}
@@ -168,6 +373,80 @@
       }
     },
     "/api/favorites": {
+      "get": {
+        "tags": ["User Data"],
+        "summary": "获取全部收藏",
+        "responses": {
+          "200": {
+            "description": "返回收藏映射",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/FavoriteMap"
+                    },
+                    {
+                      "additionalProperties": {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/FavoriteItem"
+                          },
+                          {
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "source_name": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "year": {
+                                "type": "string",
+                                "default": ""
+                              },
+                              "cover": {
+                                "type": "string",
+                                "default": ""
+                              },
+                              "total_episodes": {
+                                "type": "integer",
+                                "default": 0
+                              },
+                              "save_time": {
+                                "type": "number",
+                                "default": 1771058034686
+                              },
+                              "search_title": {
+                                "type": "string"
+                              },
+                              "origin": {
+                                "type": "string",
+                                "enum": ["vod", "live"]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": ["User Data"],
         "summary": "保存收藏",
@@ -208,7 +487,7 @@
                       },
                       "save_time": {
                         "type": "number",
-                        "default": 1771051281880
+                        "default": 1771058034686
                       },
                       "search_title": {
                         "type": "string"
@@ -248,9 +527,137 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": ["User Data"],
+        "summary": "删除收藏（单条或全部）",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "key",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/playrecords": {
+      "get": {
+        "tags": ["User Data"],
+        "summary": "获取播放记录",
+        "responses": {
+          "200": {
+            "description": "返回播放记录映射",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/PlayRecordMap"
+                    },
+                    {
+                      "additionalProperties": {
+                        "allOf": [
+                          {
+                            "$ref": "#/components/schemas/PlayRecordItem"
+                          },
+                          {
+                            "properties": {
+                              "title": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "source_name": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "year": {
+                                "type": "string",
+                                "default": ""
+                              },
+                              "cover": {
+                                "type": "string",
+                                "default": ""
+                              },
+                              "index": {
+                                "type": "integer",
+                                "default": 0
+                              },
+                              "total_episodes": {
+                                "type": "integer",
+                                "default": 0
+                              },
+                              "play_time": {
+                                "type": "number",
+                                "default": 0
+                              },
+                              "total_time": {
+                                "type": "number",
+                                "default": 0
+                              },
+                              "save_time": {
+                                "type": "number",
+                                "default": 1771058034687
+                              },
+                              "search_title": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": ["User Data"],
         "summary": "保存播放记录",
@@ -303,7 +710,7 @@
                       },
                       "save_time": {
                         "type": "number",
-                        "default": 1771051281881
+                        "default": 1771058034688
                       },
                       "search_title": {
                         "type": "string"
@@ -339,9 +746,84 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": ["User Data"],
+        "summary": "删除播放记录（单条或全部）",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "key",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/searchhistory": {
+      "get": {
+        "tags": ["User Data"],
+        "summary": "获取搜索历史",
+        "responses": {
+          "200": {
+            "description": "返回搜索历史列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": ["User Data"],
         "summary": "新增搜索历史",
@@ -388,9 +870,71 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": ["User Data"],
+        "summary": "删除搜索历史（单条或全部）",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "keyword",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/skipconfigs": {
+      "get": {
+        "tags": ["User Data"],
+        "summary": "获取全部跳过片头片尾配置",
+        "responses": {
+          "200": {
+            "description": "返回配置映射",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkipConfigMap"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": ["User Data"],
         "summary": "保存跳过片头片尾配置",
@@ -444,6 +988,52 @@
           },
           "400": {
             "description": "参数验证失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["User Data"],
+        "summary": "删除单条跳过片头片尾配置",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "key",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
             "content": {
               "application/json": {
                 "schema": {

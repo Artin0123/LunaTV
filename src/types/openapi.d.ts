@@ -132,7 +132,52 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** 获取全部收藏 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 返回收藏映射 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['FavoriteMap'] & {
+              [key: string]: components['schemas']['FavoriteItem'] & {
+                title?: string;
+                source_name?: string;
+                /** @default  */
+                year: string;
+                /** @default  */
+                cover: string;
+                /** @default 0 */
+                total_episodes: number;
+                /** @default 1771058034686 */
+                save_time: number;
+                search_title?: string;
+                /** @enum {string} */
+                origin?: 'vod' | 'live';
+              };
+            };
+          };
+        };
+        /** @description 未授权 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiError'];
+          };
+        };
+      };
+    };
     put?: never;
     /** 保存收藏 */
     post: {
@@ -155,7 +200,7 @@ export interface paths {
               cover?: string;
               /** @default 0 */
               total_episodes?: number;
-              /** @default 1771051281880 */
+              /** @default 1771058034686 */
               save_time?: number;
               search_title?: string;
               /** @enum {string} */
@@ -185,7 +230,47 @@ export interface paths {
         };
       };
     };
-    delete?: never;
+    /** 删除收藏（单条或全部） */
+    delete: {
+      parameters: {
+        query?: {
+          key?: string;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 删除成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiSuccess'];
+          };
+        };
+        /** @description 参数错误 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiError'];
+          };
+        };
+        /** @description 未授权 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiError'];
+          };
+        };
+      };
+    };
     options?: never;
     head?: never;
     patch?: never;
@@ -198,7 +283,56 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** 获取播放记录 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 返回播放记录映射 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['PlayRecordMap'] & {
+              [key: string]: components['schemas']['PlayRecordItem'] & {
+                title?: string;
+                source_name?: string;
+                /** @default  */
+                year: string;
+                /** @default  */
+                cover: string;
+                /** @default 0 */
+                index: number;
+                /** @default 0 */
+                total_episodes: number;
+                /** @default 0 */
+                play_time: number;
+                /** @default 0 */
+                total_time: number;
+                /** @default 1771058034687 */
+                save_time: number;
+                search_title?: string;
+              };
+            };
+          };
+        };
+        /** @description 未授权 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiError'];
+          };
+        };
+      };
+    };
     put?: never;
     /** 保存播放记录 */
     post: {
@@ -227,7 +361,7 @@ export interface paths {
               play_time?: number;
               /** @default 0 */
               total_time?: number;
-              /** @default 1771051281881 */
+              /** @default 1771058034688 */
               save_time?: number;
               search_title?: string;
             };
@@ -255,7 +389,47 @@ export interface paths {
         };
       };
     };
-    delete?: never;
+    /** 删除播放记录（单条或全部） */
+    delete: {
+      parameters: {
+        query?: {
+          key?: string;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 删除成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiSuccess'];
+          };
+        };
+        /** @description 参数错误 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiError'];
+          };
+        };
+        /** @description 未授权 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiError'];
+          };
+        };
+      };
+    };
     options?: never;
     head?: never;
     patch?: never;
@@ -268,7 +442,36 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** 获取搜索历史 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 返回搜索历史列表 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': string[];
+          };
+        };
+        /** @description 未授权 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiError'];
+          };
+        };
+      };
+    };
     put?: never;
     /** 新增搜索历史 */
     post: {
@@ -306,7 +509,38 @@ export interface paths {
         };
       };
     };
-    delete?: never;
+    /** 删除搜索历史（单条或全部） */
+    delete: {
+      parameters: {
+        query?: {
+          keyword?: string;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 删除成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiSuccess'];
+          };
+        };
+        /** @description 未授权 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiError'];
+          };
+        };
+      };
+    };
     options?: never;
     head?: never;
     patch?: never;
@@ -319,7 +553,36 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** 获取全部跳过片头片尾配置 */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 返回配置映射 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['SkipConfigMap'];
+          };
+        };
+        /** @description 未授权 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiError'];
+          };
+        };
+      };
+    };
     put?: never;
     /** 保存跳过片头片尾配置 */
     post: {
@@ -365,7 +628,47 @@ export interface paths {
         };
       };
     };
-    delete?: never;
+    /** 删除单条跳过片头片尾配置 */
+    delete: {
+      parameters: {
+        query: {
+          key: string;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description 删除成功 */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiSuccess'];
+          };
+        };
+        /** @description 参数错误 */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiError'];
+          };
+        };
+        /** @description 未授权 */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ApiError'];
+          };
+        };
+      };
+    };
     options?: never;
     head?: never;
     patch?: never;
@@ -383,6 +686,89 @@ export interface components {
     };
     ApiSuccess: {
       success: boolean;
+    };
+    FavoriteItem: {
+      title: string;
+      source_name: string;
+      /** @default  */
+      year: string;
+      /** @default  */
+      cover: string;
+      /** @default 0 */
+      total_episodes: number;
+      /** @default 1771058034683 */
+      save_time: number;
+      search_title?: string;
+      /** @enum {string} */
+      origin?: 'vod' | 'live';
+    };
+    PlayRecordItem: {
+      title: string;
+      source_name: string;
+      /** @default  */
+      year: string;
+      /** @default  */
+      cover: string;
+      /** @default 0 */
+      index: number;
+      /** @default 0 */
+      total_episodes: number;
+      /** @default 0 */
+      play_time: number;
+      /** @default 0 */
+      total_time: number;
+      /** @default 1771058034684 */
+      save_time: number;
+      search_title?: string;
+    };
+    SkipConfigItem: {
+      /** @default true */
+      enable: boolean;
+      /** @default 0 */
+      intro_time: number;
+      /** @default 0 */
+      outro_time: number;
+    };
+    FavoriteMap: {
+      [key: string]: components['schemas']['FavoriteItem'] & {
+        title?: string;
+        source_name?: string;
+        /** @default  */
+        year: string;
+        /** @default  */
+        cover: string;
+        /** @default 0 */
+        total_episodes: number;
+        /** @default 1771058034684 */
+        save_time: number;
+        search_title?: string;
+        /** @enum {string} */
+        origin?: 'vod' | 'live';
+      };
+    };
+    PlayRecordMap: {
+      [key: string]: components['schemas']['PlayRecordItem'] & {
+        title?: string;
+        source_name?: string;
+        /** @default  */
+        year: string;
+        /** @default  */
+        cover: string;
+        /** @default 0 */
+        index: number;
+        /** @default 0 */
+        total_episodes: number;
+        /** @default 0 */
+        play_time: number;
+        /** @default 0 */
+        total_time: number;
+        /** @default 1771058034685 */
+        save_time: number;
+        search_title?: string;
+      };
+    };
+    SkipConfigMap: {
+      [key: string]: components['schemas']['SkipConfigItem'];
     };
   };
   responses: never;

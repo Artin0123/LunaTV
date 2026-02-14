@@ -89,7 +89,7 @@ pnpm format            # 格式化代码 (Prettier)
 
 > **推荐**：Serverless 部署使用 `upstash` 模式。
 
-### Redis 性能优化
+### Upstash 性能优化
 
 - 批量读取使用 `MGET`（替代 N 次单独 GET）
 - 搜索历史写入使用 Pipeline（3 次操作合并为 1 次往返）
@@ -160,20 +160,20 @@ pnpm format            # 格式化代码 (Prettier)
 
 ### 管理 API（需 admin/owner 角色）
 
-| 路由                             | 说明                                   |
-| -------------------------------- | -------------------------------------- |
-| `/api/admin/config`              | 管理员配置                             |
-| `/api/admin/config_file`         | 配置文件编辑                           |
-| `/api/admin/config_subscription` | 配置订阅                               |
-| `/api/admin/site`                | 站点设置                               |
-| `/api/admin/user`                | 用户管理                               |
-| `/api/admin/source/*`            | 采集源管理                             |
-| `/api/admin/category`            | 分类管理                               |
-| `/api/admin/live/*`              | 直播源管理                             |
-| `/api/admin/data_migration/*`    | 数据导入/导出                          |
-| `/api/admin/reset`               | 数据重置                               |
-| `/api/admin/monitor`             | 系统监控（内存、Redis 延迟、实例信息） |
-| `/api/admin/monitor/health`      | 健康检查（Upstash + 采集源连通性）     |
+| 路由                             | 说明                                     |
+| -------------------------------- | ---------------------------------------- |
+| `/api/admin/config`              | 管理员配置                               |
+| `/api/admin/config_file`         | 配置文件编辑                             |
+| `/api/admin/config_subscription` | 配置订阅                                 |
+| `/api/admin/site`                | 站点设置                                 |
+| `/api/admin/user`                | 用户管理                                 |
+| `/api/admin/source/*`            | 采集源管理                               |
+| `/api/admin/category`            | 分类管理                                 |
+| `/api/admin/live/*`              | 直播源管理                               |
+| `/api/admin/data_migration/*`    | 数据导入/导出                            |
+| `/api/admin/reset`               | 数据重置                                 |
+| `/api/admin/monitor`             | 系统监控（内存、Upstash 延迟、实例信息） |
+| `/api/admin/monitor/health`      | 健康检查（Upstash + 采集源连通性）       |
 
 ### 系统 API
 
@@ -184,5 +184,5 @@ pnpm format            # 格式化代码 (Prettier)
 | `/api/docs/openapi` | OpenAPI JSON 文档                                      |
 
 > 说明：`/api/docs` 与 `/api/docs/openapi` 当前已覆盖的核心接口为  
-> `/api/login`、`/api/change-password`、`/api/favorites`、`/api/playrecords`、`/api/searchhistory`、`/api/skipconfigs`。  
+> `/api/login`、`/api/change-password`、`/api/favorites`、`/api/playrecords`、`/api/searchhistory`、`/api/skipconfigs`（含 GET/POST/DELETE 核心方法）。  
 > 其余 API 会按优先级逐步补齐到 OpenAPI。

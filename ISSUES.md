@@ -183,7 +183,7 @@ Tailwind 4 是完全的架构重设计：
 
 **阻碍类型**：⏳ 工时密集型（非技术阻碍）
 
-- `db.client.ts` 有 1659 行代码，拆分需要仔细规划模块边界
+- `db.client.ts` 当前约 1643 行代码，拆分需要仔细规划模块边界
 - 类型统一需要全面梳理所有使用点
 - 辅助函数提取是小改动但优先级低
 - **无技术阻碍**，纯粹是工时投入 vs 收益的取舍
@@ -197,7 +197,7 @@ Tailwind 4 是完全的架构重设计：
 - 需要建立 `IStorage` 接口的完整定义
 - **无技术阻碍**，但需要仔细的代码审查和测试
 
-### 6.7-6.9 Redis 性能优化 — ✅ 已完成
+### 6.7-6.9 Upstash 性能优化 — ✅ 已完成
 
 已将 `getAllPlayRecords`/`getAllFavorites` 的 N+1 查询改为 `MGET` 批量获取，
 `addSearchHistory` 的 3 次操作改为 Pipeline 合并。
@@ -243,7 +243,7 @@ Tailwind 4 是完全的架构重设计：
 
 - Upstash `deleteUser`：3 次 KEYS 扫描合并为单次用户命名空间匹配删除
 - Upstash `getAllUsers`：新增用户索引集合，优先走 `SMEMBERS`，仅旧数据回退 `KEYS`
-- 数据迁移导入 API：移除 `(db as any).storage`，改用 `DbManager` 公开方法
+- 数据迁移导入/导出 API：移除 `(db as any).storage`，改用 `DbManager` 公开方法
 
 ### ⏳ 待处理（后续）
 

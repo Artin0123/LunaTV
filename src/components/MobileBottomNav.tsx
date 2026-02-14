@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { getRuntimeConfig } from '@/lib/runtime-config';
+
 interface MobileBottomNavProps {
   /**
    * 主动指定当前激活的路径。当未提供时，自动使用 usePathname() 获取的路径。
@@ -50,7 +52,7 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
   ]);
 
   useEffect(() => {
-    const runtimeConfig = (window as any).RUNTIME_CONFIG;
+    const runtimeConfig = getRuntimeConfig();
     if (runtimeConfig?.CUSTOM_CATEGORIES?.length > 0) {
       setNavItems((prevItems) => [
         ...prevItems,
@@ -101,10 +103,11 @@ const MobileBottomNav = ({ activePath }: MobileBottomNavProps) => {
                 className='flex flex-col items-center justify-center w-full h-14 gap-1 text-xs'
               >
                 <item.icon
-                  className={`h-6 w-6 ${active
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-gray-500 dark:text-gray-400'
-                    }`}
+                  className={`h-6 w-6 ${
+                    active
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-gray-500 dark:text-gray-400'
+                  }`}
                 />
                 <span
                   className={

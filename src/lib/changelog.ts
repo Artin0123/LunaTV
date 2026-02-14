@@ -11,17 +11,38 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '100.1.1',
+    date: '2026-02-14',
+    added: [
+      // 无新增内容
+    ],
+    changed: [
+      '对齐文档与现状：统一监控文案中的存储延迟描述为 Upstash/数据库延迟，修正文档中的大文件行数与 OpenAPI 现状说明',
+      '更新代码审查文档中过时条目（移除 Vidstack 备选描述，替换已修复项）',
+      '更新 TODO / ISSUES 对数据迁移与拆分任务的状态描述，避免与当前代码状态不一致',
+      '补充历史回溯说明：`2.0.0` 版本曾记录移除 `localstorage`，当前版本已重新支持 `localstorage` 与 `memory` 模式（以现有代码与文档为准）',
+      '新增 `runtime-config` 统一访问层与类型定义，替代客户端直接读取 `window.RUNTIME_CONFIG as any`',
+      '新增 OpenAPI typed API helper，并接入登录/改密与核心数据读写接口（favorites、playrecords、searchhistory、skipconfigs 的 GET/POST/DELETE）',
+      '新增 OpenAPI 一致性 CI 检查（自动生成并校验 `openapi/openapi.json` 与 `src/types/openapi.d.ts` 是否漂移）',
+    ],
+    fixed: [
+      '修复数据迁移导出路由使用 `(db as any).storage` 访问密码的问题，改为走 `DbManager` 公开接口',
+      '修复数据迁移导入时对已哈希密码重复哈希的风险，新增哈希密码直写逻辑以保持迁移后登录可用',
+      '修正登录路由中的旧 `redis` 模式注释，统一为 `upstash/memory` 描述',
+    ],
+  },
+  {
     version: '100.1.0',
     date: '2026-02-14',
     added: [
       '新增密码哈希存储（bcryptjs），支持旧版明文密码自动迁移',
       '新增 Cron API 认证（`CRON_SECRET` 环境变量）',
       '新增 HMAC 签名时间戳过期机制（7 天有效期）',
-      '新增系统监控 API `/api/admin/monitor`（内存使用、Redis 延迟、实例信息）',
+      '新增系统监控 API `/api/admin/monitor`（内存使用、Upstash 延迟、实例信息）',
       '新增健康检查 API `/api/admin/monitor/health`（Upstash + 采集源连通性）',
       '新增 `.env.example` 环境变量参考文件',
       '新增单元测试（data-utils、version_check、utils，共 28 个 test case）',
-      '新增管理后台「系统监控」标签页（内存概览、Redis 延迟、SVG 趋势图、健康检查）',
+      '新增管理后台「系统监控」标签页（内存概览、Upstash 延迟、SVG 趋势图、健康检查）',
       '新增 OpenAPI 文档路由：`/api/docs`（Swagger UI）与 `/api/docs/openapi`（JSON）',
       '新增 OpenAPI 自动化生成流程：可一键输出 OpenAPI JSON 与 TypeScript 类型声明',
     ],
@@ -92,7 +113,6 @@ export const changelog: ChangelogEntry[] = [
       '修复流式搜索在无可用资源站时未发送完成事件，导致前端持续转圈的问题',
       '修复管理后台表格中 DnD 容器嵌套在 `<table>` 内导致的 hydration 警告问题',
       '修复 Next/Image 过时 `onLoadingComplete` 与 `fill` 缺失 `sizes` 警告问题',
-      '修复 Swagger UI 部分节点字体回退为 NSimSun 的问题（统一 endpoint 文本为无衬线）',
     ],
   },
   {

@@ -18,6 +18,8 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { postOpenApi } from '@/lib/openapi-client';
+import { getRuntimeConfig, type StorageType } from '@/lib/runtime-config';
 import { CURRENT_VERSION } from '@/lib/version';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
 
@@ -35,7 +37,7 @@ export const UserMenu: React.FC = () => {
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isVersionPanelOpen, setIsVersionPanelOpen] = useState(false);
   const [authInfo, setAuthInfo] = useState<AuthInfo | null>(null);
-  const [storageType, setStorageType] = useState<string>('localstorage');
+  const [storageType, setStorageType] = useState<StorageType>('localstorage');
   const [mounted, setMounted] = useState(false);
 
   // Body 滚动锁定 - 使用 overflow 方式避免布局问题
@@ -53,7 +55,6 @@ export const UserMenu: React.FC = () => {
       html.style.overflow = 'hidden';
 
       return () => {
-
         // 恢复所有原始样式
         body.style.overflow = originalBodyOverflow;
         html.style.overflow = originalHtmlOverflow;
@@ -67,8 +68,12 @@ export const UserMenu: React.FC = () => {
   const [enableOptimization, setEnableOptimization] = useState(true);
   const [fluidSearch, setFluidSearch] = useState(true);
   const [liveDirectConnect, setLiveDirectConnect] = useState(false);
-  const [doubanDataSource, setDoubanDataSource] = useState('cmliussss-cdn-tencent');
-  const [doubanImageProxyType, setDoubanImageProxyType] = useState('cmliussss-cdn-tencent');
+  const [doubanDataSource, setDoubanDataSource] = useState(
+    'cmliussss-cdn-tencent',
+  );
+  const [doubanImageProxyType, setDoubanImageProxyType] = useState(
+    'cmliussss-cdn-tencent',
+  );
   const [doubanImageProxyUrl, setDoubanImageProxyUrl] = useState('');
   const [isDoubanDropdownOpen, setIsDoubanDropdownOpen] = useState(false);
   const [isDoubanImageProxyDropdownOpen, setIsDoubanImageProxyDropdownOpen] =
@@ -120,25 +125,23 @@ export const UserMenu: React.FC = () => {
       const auth = getAuthInfoFromBrowserCookie();
       setAuthInfo(auth);
 
-      const type =
-        (window as any).RUNTIME_CONFIG?.STORAGE_TYPE || 'localstorage';
-      setStorageType(type);
+      setStorageType(getRuntimeConfig().STORAGE_TYPE);
     }
   }, []);
 
   // 从 localStorage 读取设置
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const runtimeConfig = getRuntimeConfig();
       const savedAggregateSearch = localStorage.getItem(
-        'defaultAggregateSearch'
+        'defaultAggregateSearch',
       );
       if (savedAggregateSearch !== null) {
         setDefaultAggregateSearch(JSON.parse(savedAggregateSearch));
       }
 
       const savedDoubanDataSource = localStorage.getItem('doubanDataSource');
-      const defaultDoubanProxyType =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
+      const defaultDoubanProxyType = runtimeConfig.DOUBAN_PROXY_TYPE;
       if (savedDoubanDataSource !== null) {
         setDoubanDataSource(savedDoubanDataSource);
       } else if (defaultDoubanProxyType) {
@@ -146,8 +149,7 @@ export const UserMenu: React.FC = () => {
       }
 
       const savedDoubanProxyUrl = localStorage.getItem('doubanProxyUrl');
-      const defaultDoubanProxy =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY || '';
+      const defaultDoubanProxy = runtimeConfig.DOUBAN_PROXY;
       if (savedDoubanProxyUrl !== null) {
         setDoubanProxyUrl(savedDoubanProxyUrl);
       } else if (defaultDoubanProxy) {
@@ -155,10 +157,9 @@ export const UserMenu: React.FC = () => {
       }
 
       const savedDoubanImageProxyType = localStorage.getItem(
-        'doubanImageProxyType'
+        'doubanImageProxyType',
       );
-      const defaultDoubanImageProxyType =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE || 'cmliussss-cdn-tencent';
+      const defaultDoubanImageProxyType = runtimeConfig.DOUBAN_IMAGE_PROXY_TYPE;
       if (savedDoubanImageProxyType !== null) {
         setDoubanImageProxyType(savedDoubanImageProxyType);
       } else if (defaultDoubanImageProxyType) {
@@ -166,10 +167,9 @@ export const UserMenu: React.FC = () => {
       }
 
       const savedDoubanImageProxyUrl = localStorage.getItem(
-        'doubanImageProxyUrl'
+        'doubanImageProxyUrl',
       );
-      const defaultDoubanImageProxyUrl =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
+      const defaultDoubanImageProxyUrl = runtimeConfig.DOUBAN_IMAGE_PROXY;
       if (savedDoubanImageProxyUrl !== null) {
         setDoubanImageProxyUrl(savedDoubanImageProxyUrl);
       } else if (defaultDoubanImageProxyUrl) {
@@ -183,8 +183,7 @@ export const UserMenu: React.FC = () => {
       }
 
       const savedFluidSearch = localStorage.getItem('fluidSearch');
-      const defaultFluidSearch =
-        (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+      const defaultFluidSearch = runtimeConfig.FLUID_SEARCH;
       if (savedFluidSearch !== null) {
         setFluidSearch(JSON.parse(savedFluidSearch));
       } else if (defaultFluidSearch !== undefined) {
@@ -305,20 +304,19 @@ export const UserMenu: React.FC = () => {
     setPasswordLoading(true);
 
     try {
-      const response = await fetch('/api/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          newPassword,
-        }),
+      const result = await postOpenApi('/api/change-password', {
+        newPassword,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setPasswordError(data.error || '修改密码失败');
+      if (!result.ok) {
+        const message =
+          typeof result.data === 'object' &&
+          result.data !== null &&
+          'error' in result.data &&
+          typeof result.data.error === 'string'
+            ? result.data.error
+            : '修改密码失败';
+        setPasswordError(message);
         return;
       }
 
@@ -418,16 +416,12 @@ export const UserMenu: React.FC = () => {
   };
 
   const handleResetSettings = () => {
-    const defaultDoubanProxyType =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
-    const defaultDoubanProxy =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY || '';
-    const defaultDoubanImageProxyType =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE || 'cmliussss-cdn-tencent';
-    const defaultDoubanImageProxyUrl =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
-    const defaultFluidSearch =
-      (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+    const runtimeConfig = getRuntimeConfig();
+    const defaultDoubanProxyType = runtimeConfig.DOUBAN_PROXY_TYPE;
+    const defaultDoubanProxy = runtimeConfig.DOUBAN_PROXY;
+    const defaultDoubanImageProxyType = runtimeConfig.DOUBAN_IMAGE_PROXY_TYPE;
+    const defaultDoubanImageProxyUrl = runtimeConfig.DOUBAN_IMAGE_PROXY;
+    const defaultFluidSearch = runtimeConfig.FLUID_SEARCH;
 
     setDefaultAggregateSearch(true);
     setEnableOptimization(true);
@@ -491,12 +485,13 @@ export const UserMenu: React.FC = () => {
                 当前用户
               </span>
               <span
-                className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${(authInfo?.role || 'user') === 'owner'
-                  ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
-                  : (authInfo?.role || 'user') === 'admin'
-                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                    : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                  }`}
+                className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                  (authInfo?.role || 'user') === 'owner'
+                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+                    : (authInfo?.role || 'user') === 'admin'
+                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                      : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                }`}
               >
                 {getRoleText(authInfo?.role || 'user')}
               </span>
@@ -575,12 +570,13 @@ export const UserMenu: React.FC = () => {
                 updateStatus &&
                 updateStatus !== UpdateStatus.FETCH_FAILED && (
                   <div
-                    className={`w-2 h-2 rounded-full -translate-y-2 ${updateStatus === UpdateStatus.HAS_UPDATE
-                      ? 'bg-yellow-500'
-                      : updateStatus === UpdateStatus.NO_UPDATE
-                        ? 'bg-green-400'
-                        : ''
-                      }`}
+                    className={`w-2 h-2 rounded-full -translate-y-2 ${
+                      updateStatus === UpdateStatus.HAS_UPDATE
+                        ? 'bg-yellow-500'
+                        : updateStatus === UpdateStatus.NO_UPDATE
+                          ? 'bg-green-400'
+                          : ''
+                    }`}
                   ></div>
                 )}
             </div>
@@ -611,9 +607,7 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 设置面板 */}
-      <div
-        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col'
-      >
+      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] flex flex-col'>
         {/* 内容容器 - 独立的滚动区域 */}
         <div
           className='flex-1 p-6 overflow-y-auto'
@@ -667,7 +661,7 @@ export const UserMenu: React.FC = () => {
                 >
                   {
                     doubanDataSourceOptions.find(
-                      (option) => option.value === doubanDataSource
+                      (option) => option.value === doubanDataSource,
                     )?.label
                   }
                 </button>
@@ -675,8 +669,9 @@ export const UserMenu: React.FC = () => {
                 {/* 下拉箭头 */}
                 <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
                   <ChevronDown
-                    className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isDoubanDropdownOpen ? 'rotate-180' : ''
-                      }`}
+                    className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${
+                      isDoubanDropdownOpen ? 'rotate-180' : ''
+                    }`}
                   />
                 </div>
 
@@ -691,10 +686,11 @@ export const UserMenu: React.FC = () => {
                           handleDoubanDataSourceChange(option.value);
                           setIsDoubanDropdownOpen(false);
                         }}
-                        className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${doubanDataSource === option.value
-                          ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                          : 'text-gray-900 dark:text-gray-100'
-                          }`}
+                        className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                          doubanDataSource === option.value
+                            ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                            : 'text-gray-900 dark:text-gray-100'
+                        }`}
                       >
                         <span className='truncate'>{option.label}</span>
                         {doubanDataSource === option.value && (
@@ -712,7 +708,10 @@ export const UserMenu: React.FC = () => {
                   <button
                     type='button'
                     onClick={() =>
-                      window.open(getThanksInfo(doubanDataSource)!.url, '_blank')
+                      window.open(
+                        getThanksInfo(doubanDataSource)!.url,
+                        '_blank',
+                      )
                     }
                     className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
                   >
@@ -765,14 +764,14 @@ export const UserMenu: React.FC = () => {
                   type='button'
                   onClick={() =>
                     setIsDoubanImageProxyDropdownOpen(
-                      !isDoubanImageProxyDropdownOpen
+                      !isDoubanImageProxyDropdownOpen,
                     )
                   }
                   className='w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 text-left'
                 >
                   {
                     doubanImageProxyTypeOptions.find(
-                      (option) => option.value === doubanImageProxyType
+                      (option) => option.value === doubanImageProxyType,
                     )?.label
                   }
                 </button>
@@ -780,8 +779,9 @@ export const UserMenu: React.FC = () => {
                 {/* 下拉箭头 */}
                 <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
                   <ChevronDown
-                    className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isDoubanDropdownOpen ? 'rotate-180' : ''
-                      }`}
+                    className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${
+                      isDoubanDropdownOpen ? 'rotate-180' : ''
+                    }`}
                   />
                 </div>
 
@@ -796,10 +796,11 @@ export const UserMenu: React.FC = () => {
                           handleDoubanImageProxyTypeChange(option.value);
                           setIsDoubanImageProxyDropdownOpen(false);
                         }}
-                        className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${doubanImageProxyType === option.value
-                          ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                          : 'text-gray-900 dark:text-gray-100'
-                          }`}
+                        className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                          doubanImageProxyType === option.value
+                            ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                            : 'text-gray-900 dark:text-gray-100'
+                        }`}
                       >
                         <span className='truncate'>{option.label}</span>
                         {doubanImageProxyType === option.value && (
@@ -819,7 +820,7 @@ export const UserMenu: React.FC = () => {
                     onClick={() =>
                       window.open(
                         getThanksInfo(doubanImageProxyType)!.url,
-                        '_blank'
+                        '_blank',
                       )
                     }
                     className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
@@ -947,7 +948,9 @@ export const UserMenu: React.FC = () => {
                     type='checkbox'
                     className='sr-only peer'
                     checked={liveDirectConnect}
-                    onChange={(e) => handleLiveDirectConnectToggle(e.target.checked)}
+                    onChange={(e) =>
+                      handleLiveDirectConnectToggle(e.target.checked)
+                    }
                   />
                   <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
                   <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
@@ -988,9 +991,7 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 修改密码面板 */}
-      <div
-        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'
-      >
+      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'>
         {/* 内容容器 - 独立的滚动区域 */}
         <div
           className='h-full p-6'
