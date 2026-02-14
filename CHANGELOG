@@ -1,3 +1,22 @@
+## [100.1.2] - 2026-02-14
+
+### Added
+
+- 新增播放器截图下载功能（点播 `/play` 与直播 `/live`），支持一键保存当前画面为 PNG
+- 新增管理后台表格横向滚动辅助箭头（左/右），在窄屏下可快速横向查看完整列信息
+
+### Changed
+
+- OpenAPI 扩展到核心接口的 GET/POST/DELETE 方法描述，并重新生成 `openapi/openapi.json` 与 `src/types/openapi.d.ts`
+- 前端核心数据读写调用补齐到 OpenAPI typed helper（覆盖 favorites、playrecords、searchhistory、skipconfigs 的 GET/DELETE 路径）
+- 新增 OpenAPI 一致性工作流 `openapi-consistency.yml`，在 CI 中自动重生并校验 OpenAPI 产物漂移
+- 管理后台列表表格统一改为单行显示（`whitespace-nowrap`），避免窄屏下列文字被压缩换行
+
+### Fixed
+
+- 修复管理后台横向滚动箭头位置，改为对齐表头区域而非表格整体中线
+- 修复播放卡片 hover 时图标层级冲突，避免绿色背景覆盖白色箭头导致不可见
+
 ## [100.1.1] - 2026-02-14
 
 ### Changed

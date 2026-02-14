@@ -651,7 +651,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
             {/* 悬浮遮罩 */}
             <div
-              className='absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100'
+              className='absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100 pointer-events-none'
               style={
                 {
                   WebkitUserSelect: 'none',
@@ -669,7 +669,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             {config.showPlayButton && (
               <div
                 data-button='true'
-                className='absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-300 ease-in-out delay-75 group-hover:opacity-100 group-hover:scale-100'
+                className='absolute inset-0 z-20 flex items-center justify-center opacity-0 transition-all duration-300 ease-in-out delay-75 group-hover:opacity-100 group-hover:scale-100'
                 style={
                   {
                     WebkitUserSelect: 'none',
@@ -682,22 +682,25 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   return false;
                 }}
               >
-                <PlayCircleIcon
-                  size={50}
-                  strokeWidth={0.8}
-                  className='text-white fill-transparent transition-all duration-300 ease-out hover:fill-green-500 hover:scale-[1.1]'
-                  style={
-                    {
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                    } as React.CSSProperties
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
-                />
+                <div className='group/play relative flex h-[50px] w-[50px] items-center justify-center rounded-full transition-transform duration-300 ease-out hover:scale-[1.1]'>
+                  <span className='pointer-events-none absolute inset-[5px] rounded-full bg-green-500 opacity-0 transition-opacity duration-200 ease-out group-hover/play:opacity-100'></span>
+                  <PlayCircleIcon
+                    size={50}
+                    strokeWidth={0.8}
+                    className='relative z-10 text-white [&_circle]:fill-transparent [&_circle]:stroke-white [&_path]:fill-white [&_path]:stroke-white'
+                    style={
+                      {
+                        WebkitUserSelect: 'none',
+                        userSelect: 'none',
+                        WebkitTouchCallout: 'none',
+                      } as React.CSSProperties
+                    }
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      return false;
+                    }}
+                  />
+                </div>
               </div>
             )}
 
@@ -705,7 +708,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             {(config.showHeart || config.showCheckCircle) && (
               <div
                 data-button='true'
-                className='absolute bottom-3 right-3 flex gap-3 opacity-0 translate-y-2 transition-all duration-300 ease-in-out sm:group-hover:opacity-100 sm:group-hover:translate-y-0'
+                className='absolute bottom-3 right-3 z-20 flex gap-3 opacity-0 translate-y-2 transition-all duration-300 ease-in-out sm:group-hover:opacity-100 sm:group-hover:translate-y-0'
                 style={
                   {
                     WebkitUserSelect: 'none',

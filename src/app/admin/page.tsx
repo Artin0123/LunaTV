@@ -29,6 +29,7 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  CirclePlay,
   Database,
   ExternalLink,
   FileText,
@@ -39,7 +40,14 @@ import {
   Video,
 } from 'lucide-react';
 import { GripVertical } from 'lucide-react';
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 
 import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
@@ -332,6 +340,131 @@ interface CollapsibleTabProps {
   onToggle: () => void;
   children: React.ReactNode;
 }
+
+interface HorizontalScrollableTableProps {
+  className: string;
+  dataTable?: string;
+  children: React.ReactNode;
+}
+
+const HorizontalScrollableTable = ({
+  className,
+  dataTable,
+  children,
+}: HorizontalScrollableTableProps) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [showScrollLeft, setShowScrollLeft] = useState(false);
+  const [showScrollRight, setShowScrollRight] = useState(false);
+  const [headerCenterY, setHeaderCenterY] = useState(24);
+
+  const updateScrollState = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) {
+      setShowScrollLeft(false);
+      setShowScrollRight(false);
+      setHeaderCenterY(24);
+      return;
+    }
+    const hasHorizontalOverflow = el.scrollWidth > el.clientWidth + 2;
+    const reachedStart = el.scrollLeft <= 2;
+    const reachedEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
+    setShowScrollLeft(hasHorizontalOverflow && !reachedStart);
+    setShowScrollRight(hasHorizontalOverflow && !reachedEnd);
+
+    const thead = el.querySelector('thead');
+    if (thead instanceof HTMLElement) {
+      setHeaderCenterY(thead.offsetTop + thead.offsetHeight / 2);
+    } else {
+      setHeaderCenterY(24);
+    }
+  }, []);
+
+  const handleScrollRight = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const scrollStep = Math.max(200, Math.floor(el.clientWidth * 0.75));
+    el.scrollBy({ left: scrollStep, behavior: 'smooth' });
+    window.setTimeout(updateScrollState, 260);
+  }, [updateScrollState]);
+
+  const handleScrollLeft = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const scrollStep = Math.max(200, Math.floor(el.clientWidth * 0.75));
+    el.scrollBy({ left: -scrollStep, behavior: 'smooth' });
+    window.setTimeout(updateScrollState, 260);
+  }, [updateScrollState]);
+
+  useEffect(() => {
+    updateScrollState();
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleScroll = () => updateScrollState();
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', updateScrollState);
+
+    const resizeObserver = new ResizeObserver(() => updateScrollState());
+    resizeObserver.observe(el);
+    if (el.firstElementChild instanceof HTMLElement) {
+      resizeObserver.observe(el.firstElementChild);
+    }
+    const thead = el.querySelector('thead');
+    if (thead instanceof HTMLElement) {
+      resizeObserver.observe(thead);
+    }
+
+    const mutationObserver = new MutationObserver(() => updateScrollState());
+    mutationObserver.observe(el, { childList: true, subtree: true });
+
+    return () => {
+      el.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', updateScrollState);
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, [children, updateScrollState]);
+
+  return (
+    <div className='relative'>
+      <div ref={containerRef} className={className} data-table={dataTable}>
+        {children}
+      </div>
+      {showScrollLeft && (
+        <button
+          type='button'
+          onClick={handleScrollLeft}
+          aria-label='向左滚动列表'
+          style={{ top: `${headerCenterY}px` }}
+          className='absolute left-0 -translate-x-1/2 -translate-y-1/2 z-30 text-white drop-shadow-lg transition-all duration-200 hover:scale-105 hover:text-green-400'
+        >
+          <CirclePlay
+            size={24}
+            strokeWidth={0.9}
+            className='rotate-180 fill-transparent'
+            aria-hidden='true'
+          />
+        </button>
+      )}
+      {showScrollRight && (
+        <button
+          type='button'
+          onClick={handleScrollRight}
+          aria-label='向右滚动列表'
+          style={{ top: `${headerCenterY}px` }}
+          className='absolute right-0 translate-x-1/2 -translate-y-1/2 z-30 text-white drop-shadow-lg transition-all duration-200 hover:scale-105 hover:text-green-400'
+        >
+          <CirclePlay
+            size={24}
+            strokeWidth={0.9}
+            className='fill-transparent'
+            aria-hidden='true'
+          />
+        </button>
+      )}
+    </div>
+  );
+};
 
 const CollapsibleTab = ({
   title,
@@ -894,8 +1027,8 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
         </div>
 
         {/* 用户组列表 */}
-        <div className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[20rem] overflow-y-auto overflow-x-auto relative'>
-          <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
+        <HorizontalScrollableTable className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[20rem] overflow-y-auto overflow-x-auto relative'>
+          <table className='min-w-full whitespace-nowrap divide-y divide-gray-200 dark:divide-gray-700'>
             <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
               <tr>
                 <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
@@ -956,7 +1089,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
               )}
             </tbody>
           </table>
-        </div>
+        </HorizontalScrollableTable>
       </div>
 
       {/* 用户列表 */}
@@ -1131,11 +1264,11 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
         )}
 
         {/* 用户列表 */}
-        <div
+        <HorizontalScrollableTable
           className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
           data-table='user-list'
         >
-          <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
+          <table className='min-w-full whitespace-nowrap divide-y divide-gray-200 dark:divide-gray-700'>
             <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
               <tr>
                 <th className='w-4' />
@@ -1415,7 +1548,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
               );
             })()}
           </table>
-        </div>
+        </HorizontalScrollableTable>
       </div>
 
       {/* 配置用户采集源权限弹窗 */}
@@ -3150,7 +3283,7 @@ const VideoSourceConfig = ({
       )}
 
       {/* 视频源表格 */}
-      <div
+      <HorizontalScrollableTable
         className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
         data-table='source-list'
       >
@@ -3161,7 +3294,7 @@ const VideoSourceConfig = ({
           autoScroll={false}
           modifiers={[restrictToVerticalAxis, restrictToParentElement]}
         >
-          <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
+          <table className='min-w-full whitespace-nowrap divide-y divide-gray-200 dark:divide-gray-700'>
             <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
               <tr>
                 <th className='w-8' />
@@ -3208,7 +3341,7 @@ const VideoSourceConfig = ({
             </SortableContext>
           </table>
         </DndContext>
-      </div>
+      </HorizontalScrollableTable>
 
       {/* 保存排序按钮 */}
       {orderChanged && (
@@ -3651,7 +3784,7 @@ const CategoryConfig = ({
       )}
 
       {/* 分类表格 */}
-      <div className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'>
+      <HorizontalScrollableTable className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -3659,7 +3792,7 @@ const CategoryConfig = ({
           autoScroll={false}
           modifiers={[restrictToVerticalAxis, restrictToParentElement]}
         >
-          <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
+          <table className='min-w-full whitespace-nowrap divide-y divide-gray-200 dark:divide-gray-700'>
             <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
               <tr>
                 <th className='w-8' />
@@ -3695,7 +3828,7 @@ const CategoryConfig = ({
             </SortableContext>
           </table>
         </DndContext>
-      </div>
+      </HorizontalScrollableTable>
 
       {/* 保存排序按钮 */}
       {orderChanged && (
@@ -5032,7 +5165,7 @@ const LiveSourceConfig = ({
       )}
 
       {/* 直播源表格 */}
-      <div
+      <HorizontalScrollableTable
         className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
         data-table='live-source-list'
       >
@@ -5043,7 +5176,7 @@ const LiveSourceConfig = ({
           autoScroll={false}
           modifiers={[restrictToVerticalAxis, restrictToParentElement]}
         >
-          <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
+          <table className='min-w-full whitespace-nowrap divide-y divide-gray-200 dark:divide-gray-700'>
             <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
               <tr>
                 <th className='w-8' />
@@ -5085,7 +5218,7 @@ const LiveSourceConfig = ({
             </SortableContext>
           </table>
         </DndContext>
-      </div>
+      </HorizontalScrollableTable>
 
       {/* 保存排序按钮 */}
       {orderChanged && (
