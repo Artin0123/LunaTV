@@ -30,7 +30,7 @@
 | 认证        | bcrypt 密码哈希 + HMAC-SHA256 签名 + HttpOnly/Secure Cookie                |
 | 编码        | bs58 (Base58)                                                              |
 | 数据库      | Upstash Redis (HTTP) / localStorage                                        |
-| PWA         | next-pwa（已停止维护，待替换）                                             |
+| PWA         | @serwist/next (现代化 Service Worker)                                      |
 | 轮播        | Swiper 11                                                                  |
 | 代码质量    | ESLint 8 + Prettier 3 + Jest 30 + Husky 9 + Commitlint 20 + lint-staged 16 |
 | 图标        | react-icons + lucide-react                                                 |
@@ -108,7 +108,7 @@
 
 ### 10. 其他
 
-- PWA 支持 + 响应式布局 + 暗色/亮色主题
+- PWA 支持 (@serwist) + 响应式布局 + 暗色/亮色主题
 - 版本检查 + 变更日志 + 每日新番放送
 - Cloudflare Workers 反代 + 图片/m3u8 代理
 - AndroidTV / OrionTV / Selene 客户端兼容
@@ -121,9 +121,8 @@
 
 | #   | 问题                                            | 位置                                        |
 | --- | ----------------------------------------------- | ------------------------------------------- |
-| 1   | `db.client.ts` 1643 行巨型文件                  | 应拆分为独立模块                            |
-| 2   | 大量 `eslint-disable` 注释                      | 50+ 文件，掩盖实际问题                      |
-| 3   | 认证资讯仍依赖客户端可读 cookie (`auth_client`) | 可再评估改为 `/api/me` 拉取角色，降低篡改面 |
+| 1   | 大量 `eslint-disable` 注释                      | 50+ 文件，掩盖实际问题                      |
+| 2   | 认证资讯仍依赖客户端可读 cookie (`auth_client`) | 可再评估改为 `/api/me` 拉取角色，降低篡改面 |
 
 ### 性能
 
@@ -139,18 +138,17 @@
 
 ### DX
 
-| #   | 问题                  | 说明                                                                                                   |
-| --- | --------------------- | ------------------------------------------------------------------------------------------------------ |
-| 1   | Zod 部分使用          | 已应用到 login/change-password/favorites/playrecords/searchhistory/skipconfigs，仍需逐步扩展到更多路由 |
-| 2   | 测试覆盖率较低        | 有 28 个基础测试，但缺少 API 路由和组件测试                                                            |
-| 3   | `next-pwa` 已停止维护 | 待迁移到 `@serwist/next` 或 `@ducanh2912/next-pwa`                                                     |
+| #   | 问题           | 说明                                                                                                   |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------ |
+| 1   | Zod 部分使用   | 已应用到 login/change-password/favorites/playrecords/searchhistory/skipconfigs，仍需逐步扩展到更多路由 |
+| 2   | 测试覆盖率较低 | 有 28 个基础测试，但缺少 API 路由和组件测试                                                            |
 
 ### 2026-02-14 复查补充（Medium）
 
 | #   | 严重度 | 问题                                                        | 状态                                  |
 | --- | :----: | ----------------------------------------------------------- | ------------------------------------- |
-| 1   |   高   | `src/app/admin/page.tsx` 体积过大（5476 行）                | 待处理                                |
-| 2   |   高   | `src/lib/db.client.ts` 体积过大（1643 行）                  | 待处理                                |
+| 1   |   高   | `src/app/admin/page.tsx` 体积过大（5476 行）                | ✅ 已拆分为子组件                     |
+| 2   |   高   | `src/lib/db.client.ts` 体积过大（1643 行）                  | ✅ 已拆分为子模块                     |
 | 3   |   高   | `upstash.db.ts` 的 `deleteUser` 多次 KEYS 扫描              | ✅ 已优化为单次命名空间匹配           |
 | 4   |   高   | `upstash.db.ts` 的 `getAllUsers` 使用 `KEYS('u:*:pwd')`     | ✅ 已改为用户索引集合优先（兼容回退） |
 | 5   |   中   | `vod_play_url` 解析逻辑重复                                 | ✅ 已抽取 `parseVodPlayUrl`           |

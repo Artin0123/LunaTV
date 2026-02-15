@@ -11,6 +11,23 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: '100.1.4',
+    date: '2026-02-14',
+    added: [
+      // 无新增内容
+    ],
+    changed: [
+      '**代码重构**：将 1600+ 行的 `src/lib/db.client.ts` 拆分为 `src/lib/client/` 下的多个模块（API 客户端、缓存管理、业务逻辑），提升代码可读性与可维护性',
+      '**代码重构**：将 5400+ 行的 `src/app/admin/page.tsx` 拆分为 `src/app/admin/_components/` 下的独立组件（用户配置、视频源配置等），显著降低单文件复杂度',
+      '**PWA 升级**：替换已停止维护的 `next-pwa` 为 `@serwist/next`，采用更现代的 Service Worker 配置方案',
+      '**依赖更新**：升级 `eslint-plugin-unused-imports` 等依赖，更新 `tsconfig.json` 为 `bundler` 模块解析模式以支持新版库',
+      '**文档同步**：更新 `DEV_AND_DEPLOY.md` 与 `TODO.md`，反映架构调整与任务完成状态',
+    ],
+    fixed: [
+      // 无修复内容
+    ],
+  },
+  {
     version: '100.1.3',
     date: '2026-02-14',
     added: [
