@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
-/* eslint-disable @typescript-eslint/no-var-requires */
+import withSerwistInit from '@serwist/next';
+
+const withSerwist = withSerwistInit({
+  swSrc: 'src/app/sw.ts',
+  swDest: 'public/sw.js',
+  disable: process.env.NODE_ENV === 'development',
+});
 
 const nextConfig = {
   eslint: {
@@ -67,10 +73,4 @@ const nextConfig = {
   },
 };
 
-const withSerwist = require('@serwist/next').default({
-  swSrc: 'src/app/sw.ts',
-  swDest: 'public/sw.js',
-  disable: process.env.NODE_ENV === 'development',
-});
-
-module.exports = withSerwist(nextConfig);
+export default withSerwist(nextConfig);
