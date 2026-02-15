@@ -15,7 +15,7 @@
     "format": "prettier -w .",
     "format:check": "prettier -c .",
     "gen:manifest": "node scripts/generate-manifest.js",
-    "gen:openapi:json": "tsx scripts/export-openapi-json.ts",
+    "gen:openapi:json": "tsx scripts/export-openapi-json.ts && prettier -w openapi/openapi.json",
     "gen:openapi:types": "pnpm gen:openapi:json && openapi-typescript openapi/openapi.json -o src/types/openapi.d.ts",
     "check:openapi:drift": "git diff --exit-code -- openapi/openapi.json src/types/openapi.d.ts",
     "postbuild": "echo 'Build completed - sitemap generation disabled'",

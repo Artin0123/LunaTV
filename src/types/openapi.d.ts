@@ -158,7 +158,7 @@ export interface paths {
                 cover: string;
                 /** @default 0 */
                 total_episodes: number;
-                /** @default 1771118842904 */
+                /** @default 0 */
                 save_time: number;
                 search_title?: string;
                 /** @enum {string} */
@@ -200,7 +200,7 @@ export interface paths {
               cover?: string;
               /** @default 0 */
               total_episodes?: number;
-              /** @default 1771118842904 */
+              /** @default 0 */
               save_time?: number;
               search_title?: string;
               /** @enum {string} */
@@ -315,7 +315,7 @@ export interface paths {
                 play_time: number;
                 /** @default 0 */
                 total_time: number;
-                /** @default 1771118842905 */
+                /** @default 0 */
                 save_time: number;
                 search_title?: string;
               };
@@ -361,7 +361,7 @@ export interface paths {
               play_time?: number;
               /** @default 0 */
               total_time?: number;
-              /** @default 1771118842905 */
+              /** @default 0 */
               save_time?: number;
               search_title?: string;
             };
@@ -696,7 +696,7 @@ export interface components {
       cover: string;
       /** @default 0 */
       total_episodes: number;
-      /** @default 1771118842901 */
+      /** @default 0 */
       save_time: number;
       search_title?: string;
       /** @enum {string} */
@@ -717,7 +717,7 @@ export interface components {
       play_time: number;
       /** @default 0 */
       total_time: number;
-      /** @default 1771118842902 */
+      /** @default 0 */
       save_time: number;
       search_title?: string;
     };
@@ -739,7 +739,7 @@ export interface components {
         cover: string;
         /** @default 0 */
         total_episodes: number;
-        /** @default 1771118842902 */
+        /** @default 0 */
         save_time: number;
         search_title?: string;
         /** @enum {string} */
@@ -762,7 +762,7 @@ export interface components {
         play_time: number;
         /** @default 0 */
         total_time: number;
-        /** @default 1771118842903 */
+        /** @default 0 */
         save_time: number;
         search_title?: string;
       };
