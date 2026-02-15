@@ -156,24 +156,14 @@ Tailwind 4 是完全的架构重设计：
 
 ---
 
-### 🟡 5.40 替换 next-pwa
+### ✅ 5.40 替换 next-pwa
 
-**当前**：`next-pwa`（已停止维护）
-**目标**：`@serwist/next` 或 `@ducanh2912/next-pwa`
+**当前**：`@serwist/next` (v9.5.6)
+**状态**：已完成
 
-**阻碍原因**：
-
-- 当前 PWA 功能运作正常
-- 替换需要研究和测试 Service Worker 注册、离线缓存策略、Manifest 生成等
-- 两个替代方案都需要评估：
-  - `@serwist/next`：更现代，但迁移成本较高
-  - `@ducanh2912/next-pwa`：`next-pwa` 的直接 fork，迁移成本最低
-- 低优先级，等出现兼容性问题再处理
-
-**解除条件**：
-
-- 当 `next-pwa` 出现与 Next.js 或 Node.js 不兼容的问题时
-- 估计工时：1 天
+- 已成功移除废弃的 `next-pwa`
+- 已迁移至 `@serwist/next`，使用 `sw.ts` 进行现代化配置
+- `tsconfig.json` 已更新为 `bundler` 模式以支持 Worker 类型
 
 ---
 
@@ -181,12 +171,10 @@ Tailwind 4 是完全的架构重设计：
 
 ### 6.1-6.3 代码重构（拆分 db.client.ts / 统一类型 / 提取辅助函数）
 
-**阻碍类型**：⏳ 工时密集型（非技术阻碍）
+**状态**：✅ 已完成
 
-- `db.client.ts` 当前约 1643 行代码，拆分需要仔细规划模块边界
-- 类型统一需要全面梳理所有使用点
-- 辅助函数提取是小改动但优先级低
-- **无技术阻碍**，纯粹是工时投入 vs 收益的取舍
+- `db.client.ts` 已拆分为 `src/lib/client/` 下的多个模块
+- `admin/page.tsx` 已拆分为 `src/app/admin/_components/` 下的子组件
 
 ### 6.5-6.6 类型安全 + ESLint Disable 清理
 
@@ -247,13 +235,13 @@ Tailwind 4 是完全的架构重设计：
 - `RUNTIME_CONFIG`：已完成类型化与集中访问层改造，替代 `(window as any)` 分散读取
 - `/play` 与 `/live`：播放器依赖改为运行时动态加载，降低开发态 HMR 时 chunk 初始化崩溃概率
 - `/api/playrecords`：POST 新增请求体安全解析，空 body / 非 JSON 改为 400，不再抛出 JSON 解析堆栈
+- 拆分 `src/app/admin/page.tsx`：已完成
+- 拆分 `src/lib/db.client.ts`：已完成
 
 ### ⏳ 待处理（后续）
 
 | 优先级 | 项目                            | 说明                                 |
 | ------ | ------------------------------- | ------------------------------------ |
-| 高     | 拆分 `src/app/admin/page.tsx`   | 当前 5476 行，维护成本高             |
-| 高     | 拆分 `src/lib/db.client.ts`     | 当前 1643 行，职责过重               |
 | 中     | 缩小大范围 eslint-disable       | 从整档禁用改为按行精准禁用           |
 | 低     | 优化 `JSON.stringify` 深比较    | 降低大对象比较开销并提升可读性       |
 | 低     | 合并 `handleDragEnd` 重复逻辑   | `admin/page.tsx` 有 3 处近似实现     |
@@ -266,8 +254,8 @@ Tailwind 4 是完全的架构重设计：
 | 阻碍类型                      | 项数 | 说明                                                |
 | ----------------------------- | :--: | --------------------------------------------------- |
 | 🔴 技术依赖链（需等上游升级） |  8   | React/Next.js/Tailwind 三件套 + ESLint + 关联类型包 |
-| 🟡 可执行但低优先级           |  3   | Swiper 12, tailwind-merge 3, next-pwa 替换          |
-| ⏳ 工时密集型（无技术阻碍）   |  8   | 代码重构、类型安全、性能优化                        |
+| 🟡 可执行但低优先级           |  2   | Swiper 12, tailwind-merge 3                         |
+| ⏳ 工时密集型（无技术阻碍）   |  6   | 类型安全、性能优化细节                              |
 | 🎯 功能需求（待开发）         |  6   | DX 改进、OpenAPI 等增强项                           |
 
 ### 技术依赖链图
