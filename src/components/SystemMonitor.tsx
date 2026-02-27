@@ -132,8 +132,9 @@ function latencyLevel(ms: number): 'good' | 'warn' | 'danger' {
 
 /** 判断堆使用率级别 */
 function heapLevel(percent: number): 'good' | 'warn' | 'danger' {
-  if (percent < 70) return 'good';
-  if (percent < 85) return 'warn';
+  // 考虑到 V8 的垃圾回收机制比较懒，90% 甚至以上都是常见水平，放宽报警阈值
+  if (percent < 90) return 'good';
+  if (percent < 95) return 'warn';
   return 'danger';
 }
 
@@ -512,7 +513,7 @@ export default function SystemMonitor() {
               label='CPU 使用率'
               value={monitor.cpu.percent.toFixed(0)}
               unit='%'
-              tooltip='当前 Node.js 进程 CPU 使用率。持续高于 80% 时通常会影响响应。'
+              tooltip='查看算力是否不足。'
             />
             <RingGauge
               percent={monitor.memory.heapUsedPercent}
@@ -520,7 +521,7 @@ export default function SystemMonitor() {
               label='JS 堆内存'
               value={monitor.memory.heapUsed.toFixed(0)}
               unit='MB'
-              tooltip={`当前 ${monitor.memory.heapUsed}MB / ${monitor.memory.heapTotal}MB（${monitor.memory.heapUsedPercent}%）。长期高位可能触发频繁 GC。`}
+              tooltip={`查看代码是否有内存泄漏，当前 ${monitor.memory.heapUsed}MB / ${monitor.memory.heapTotal}MB（${monitor.memory.heapUsedPercent}%）。`}
             />
             <RingGauge
               percent={(monitor.memory.rss / MEMORY_REFERENCE_MB) * 100}
@@ -528,7 +529,7 @@ export default function SystemMonitor() {
               label='总内存(RSS)'
               value={monitor.memory.rss.toFixed(0)}
               unit='MB'
-              tooltip={`进程总内存（含 JS 堆与原生模块）。当前约 ${((monitor.memory.rss / MEMORY_REFERENCE_MB) * 100).toFixed(0)}%（按 ${MEMORY_REFERENCE_MB}MB 参考刻度）。`}
+              tooltip={`查看内存是否不足，目前约占系统参考值的 ${((monitor.memory.rss / MEMORY_REFERENCE_MB) * 100).toFixed(0)}%。`}
             />
             <RingGauge
               percent={
@@ -551,7 +552,7 @@ export default function SystemMonitor() {
                   : '-'
               }
               unit='ms'
-              tooltip='每次读取配置的耗时。通常 < 100ms 较佳，> 500ms 建议关注网络或存储状态。'
+              tooltip='查看数据库或第三方 API 响应是否变慢。'
             />
           </div>
         </div>
@@ -565,7 +566,7 @@ export default function SystemMonitor() {
             value={monitor.requests.total}
             unit='次'
             sub={`监控 QPS: ${monitor.requests.qps}`}
-            tooltip='当前监控 API（/api/admin/monitor）在本实例启动后的累计请求数；QPS 为该接口最近 60 秒的平均每秒请求量。'
+            tooltip='当前监控 API（/api/admin/monitor）在本实例启动后的累计请求数，QPS 为该接口最近 60 秒的平均每秒请求量。'
           />
           <MetricCard
             label='⏱ 运行时间'
@@ -615,21 +616,21 @@ export default function SystemMonitor() {
               color='#ef4444'
               label='CPU 使用率'
               unit='%'
-              tooltip='CPU 使用率趋势。持续高于 50% 代表计算负载较重。'
+              tooltip='CPU 忙碌的趋势。如果线一直维持在很高的地方，代表网站一直在算东西，可能会卡。'
             />
             <Sparkline
               data={history.map((h) => h.rss)}
               color='#8b5cf6'
               label='总内存 (RSS)'
               unit=' MB'
-              tooltip='进程总内存趋势。如持续上升可能有内存泄漏。'
+              tooltip='整个网站吃掉的内存趋势。只要图表是一上一下的就没事，如果一直往上爬到顶，最后就会崩溃。'
             />
             <Sparkline
               data={history.map((h) => h.heapUsed)}
               color='#3b82f6'
               label='JS 堆内存'
               unit=' MB'
-              tooltip='JavaScript 堆内存趋势。锯齿形是正常的 GC 行为。'
+              tooltip='代码执行用掉的内存。在这边线像锯齿状（满了之后自动清空掉回低点）是完全正常的。'
             />
             <Sparkline
               data={history
@@ -638,7 +639,7 @@ export default function SystemMonitor() {
               color='#10b981'
               label='存储延迟'
               unit=' ms'
-              tooltip='存储读写延迟趋势。突然飙升可能是网络波动或存储服务压力。'
+              tooltip='网站去后面找资料花费的时间。突然飙高代表网络经常不稳、或者是硬盘读取太卡了。'
             />
           </div>
         </div>
@@ -694,62 +695,6 @@ export default function SystemMonitor() {
           </div>
         </div>
       )}
-
-      {/* === 名词解释 === */}
-      <details className='bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl'>
-        <summary className='cursor-pointer p-4 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors select-none'>
-          📖 指标说明（点击展开）
-        </summary>
-        <div className='px-4 pb-4 space-y-3 text-xs text-gray-500 dark:text-gray-400 leading-relaxed'>
-          <div>
-            <strong className='text-gray-700 dark:text-gray-300'>
-              CPU 使用率
-            </strong>
-            <p>Node.js 进程 CPU 占用。持续高于 80% 时，通常会影响响应时间。</p>
-          </div>
-          <div>
-            <strong className='text-gray-700 dark:text-gray-300'>
-              JS 堆内存 (Heap Used)
-            </strong>
-            <p>
-              JavaScript 引擎分配的内存。锯齿波动是正常 GC
-              行为，长期只升不降需关注。
-            </p>
-          </div>
-          <div>
-            <strong className='text-gray-700 dark:text-gray-300'>
-              总内存 RSS (Resident Set Size)
-            </strong>
-            <p>
-              进程实际占用的物理内存总量（含 JS
-              堆与原生模块）。用于观察整体内存压力。
-            </p>
-          </div>
-          <div>
-            <strong className='text-gray-700 dark:text-gray-300'>
-              存储延迟
-            </strong>
-            <p>
-              每次读取存储配置的耗时。若持续升高，通常代表网络或存储服务有压力。
-            </p>
-          </div>
-          <div>
-            <strong className='text-gray-700 dark:text-gray-300'>
-              QPS (Queries Per Second)
-            </strong>
-            <p>
-              此处统计的是监控 API（/api/admin/monitor）最近 60
-              秒的平均每秒请求数，不代表整站总流量。
-            </p>
-          </div>
-          <div>
-            <strong className='text-gray-700 dark:text-gray-300'>
-              实例状态
-            </strong>
-            <p>用于判断当前进程是刚启动还是已稳定运行，便于排查短时抖动。</p>
-          </div>
-        </div>
-      </details>
 
       {/* 无数据占位 */}
       {!monitor && !error && (
